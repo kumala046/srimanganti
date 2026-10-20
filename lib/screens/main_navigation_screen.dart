@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'beranda_screen.dart';
 import 'history_screen.dart';
 import 'profile_screen.dart';
@@ -14,7 +15,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = [
-    const BerandaScreen(),
+    const HomeScreen(),
     const HistoryScreen(),
     const ProfileScreen(),
   ];
@@ -32,7 +33,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.confirmation_number), label: ''),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.confirmation_number),
+            label: '',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
         ],
       ),
