@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'main_navigation_screen.dart'; // <-- TAMBAHAN BUAT PINDAH HALAMAN
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({Key? key}) : super(key: key);
@@ -11,12 +12,22 @@ class _AuthScreenState extends State<AuthScreen> {
   bool isLogin = true; // Toggle antara Login dan Register
   bool isPasswordVisible = false;
 
-  // Controller untuk form (siap digunakan untuk database & enkripsi nanti)
+  // Controller untuk form
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController namaController = TextEditingController();
   final TextEditingController waController = TextEditingController();
   final TextEditingController konfirmasiPasswordController = TextEditingController();
+
+  // FUNGSI UNTUK PINDAH KE HALAMAN UTAMA (PUNYAMU)
+  void _masukKeAplikasi() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const MainNavigationScreen(),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +116,7 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   // ==========================================
-  // WIDGET FORM LOGIN
+  // WIDGET FORM LOGIN (TOMBOL SUDAH BERFUNGSI)
   // ==========================================
   Widget _buildLoginForm() {
     return Column(
@@ -133,7 +144,6 @@ class _AuthScreenState extends State<AuthScreen> {
             // Tombol Biometric (Fingerprint)
             GestureDetector(
               onTap: () {
-                // TODO: Implementasi package local_auth untuk sensor sidik jari
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Fitur Biometric akan diimplementasikan')),
                 );
@@ -153,8 +163,8 @@ class _AuthScreenState extends State<AuthScreen> {
             Expanded(
               child: ElevatedButton(
                 onPressed: () {
-                  // TODO: Implementasi Login Enkripsi + Session (SharedPreferences)
-                  // TODO: Terhubung ke API/Database Online
+                  // PINDAH KE HALAMAN UTAMA
+                  _masukKeAplikasi();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1A3C2F),
@@ -169,13 +179,12 @@ class _AuthScreenState extends State<AuthScreen> {
             ),
           ],
         ),
-        // Tombol Google dihapus dari sini
       ],
     );
   }
 
   // ==========================================
-  // WIDGET FORM REGISTER (TANPA WNI/WNA & GOOGLE)
+  // WIDGET FORM REGISTER (TOMBOL SUDAH BERFUNGSI)
   // ==========================================
   Widget _buildRegisterForm() {
     return Column(
@@ -201,7 +210,8 @@ class _AuthScreenState extends State<AuthScreen> {
         Center(
           child: ElevatedButton(
             onPressed: () {
-              // TODO: Proses registrasi (Hashing Password, simpan ke SQLite/API)
+              // PINDAH KE HALAMAN UTAMA
+              _masukKeAplikasi();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1A3C2F),
@@ -214,15 +224,13 @@ class _AuthScreenState extends State<AuthScreen> {
             child: const Text('Register', style: TextStyle(fontSize: 16)),
           ),
         ),
-        // Tombol Google dihapus dari sini
       ],
     );
   }
 
   // ==========================================
-  // HELPER WIDGET (Untuk konsistensi UI)
+  // HELPER WIDGET
   // ==========================================
-  
   Widget _buildLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0, left: 4.0),
@@ -250,7 +258,7 @@ class _AuthScreenState extends State<AuthScreen> {
       decoration: InputDecoration(
         hintText: hint,
         filled: true,
-        fillColor: const Color(0xFFF7F5F0), // Cream
+        fillColor: const Color(0xFFF7F5F0),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),

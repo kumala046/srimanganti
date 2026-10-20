@@ -1,0 +1,410 @@
+import 'package:flutter/material.dart';
+import 'dart:ui';
+import 'package:video_player/video_player.dart';
+
+class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({Key? key}) : super(key: key);
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool isBlurred = false;
+  String activeModal = ''; 
+
+  final TextEditingController nameController = TextEditingController(text: 'Raden Aryo Tejo');
+  final TextEditingController emailController = TextEditingController(text: 'aryotejo@srimanganti.com');
+  final TextEditingController waController = TextEditingController(text: '0857 1234 5678');
+  final TextEditingController oldPassController = TextEditingController();
+  final TextEditingController newPassController = TextEditingController();
+
+  late VideoPlayerController _videoController;
+  bool _isVideoInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Inisialisasi Video
+    _videoController = VideoPlayerController.asset('assets/video_kraton.mp4')
+      ..initialize().then((_) {
+        setState(() {
+          _isVideoInitialized = true;
+        });
+      }).catchError((error) {
+        print("Video belum ditambahkan di folder assets.");
+      });
+  }
+
+  @override
+  void dispose() {
+    _videoController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          // ==========================================
+          // KONTEN UTAMA PROFIL
+          // ==========================================
+          SafeArea(
+            child: Column(
+              children: [
+                // HEADER
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  color: const Color(0xFF0B3D2E),
+                  child: Row(
+                    children: [
+                      Image.asset('assets/logo.png', width: 40, height: 40, errorBuilder: (c, e, s) => const Icon(Icons.image, color: Colors.white)),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text('KERATON NGAYOGYAKARTA', style: TextStyle(color: Color(0xFFE6D5B8), fontSize: 10, letterSpacing: 1)),
+                          Text('Profil Saya', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.all(24),
+                    children: [
+                      // KARTU PROFIL
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(color: const Color(0xFFFFFBEB), borderRadius: BorderRadius.circular(24), border: Border.all(color: const Color(0xFFF0EAD6))),
+                        child: Column(
+                          children: [
+                            ClipOval(
+                              child: Image.asset('assets/profil.jpg', width: 90, height: 90, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.person, size: 90)),
+                            ),
+                            const SizedBox(height: 12),
+                            const Text('Raden Aryo Tejo', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF0B3D2E), fontFamily: 'Serif')),
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                              decoration: BoxDecoration(color: const Color(0xFFE6D5B8), borderRadius: BorderRadius.circular(20)),
+                              child: const Text('@aryotejo • KeratonID #KY-88219', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF153D1F))),
+                            ),
+                            const SizedBox(height: 16),
+                            const Divider(),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                _buildStat('4', 'Pentas\nDitonton'),
+                                _buildStat('2', 'Tiket\nSiap digunakan'),
+                                _buildStat('3', 'Level\nGames', color: const Color(0xFFD35400)),
+                              ],
+                            )
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // ==========================================
+                      // KARTU ANGGOTA KELOMPOK & VIDEO
+                      // ==========================================
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(color: const Color(0xFFF3E9D2), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFE6D5B8))),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: const [
+                                Icon(Icons.groups, color: Color(0xFF0B3D2E), size: 18),
+                                SizedBox(width: 8),
+                                // JUDUL DIGANTI
+                                Text('ANGGOTA KELOMPOK', style: TextStyle(color: Color(0xFF0B3D2E), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            _buildMemberCard('Alvina Kumala Budiastuti', '124240046'),
+                            const SizedBox(height: 8),
+                            _buildMemberCard('Dhiara Ayu Nasta', '124240185'),
+                            const SizedBox(height: 8),
+                            _buildMemberCard('Nurisshifa Alfiyana', '124240186'),
+                            const SizedBox(height: 20),
+                            
+                            const Text('Dokumentasi Kunjungan', style: TextStyle(color: Color(0xFF0B3D2E), fontSize: 12, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 8),
+                            
+                            // VIDEO PLAYER DENGAN TOMBOL PLAY KECIL
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: AspectRatio(
+                                aspectRatio: 16 / 9,
+                                child: _isVideoInitialized
+                                    ? Stack(
+                                        alignment: Alignment.bottomRight,
+                                        children: [
+                                          GestureDetector(
+                                            onTap: () {
+                                              setState(() {
+                                                _videoController.value.isPlaying
+                                                    ? _videoController.pause()
+                                                    : _videoController.play();
+                                              });
+                                            },
+                                            child: Container(
+                                              color: Colors.black,
+                                              child: VideoPlayer(_videoController),
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: FloatingActionButton.small(
+                                              backgroundColor: Colors.white.withOpacity(0.8),
+                                              elevation: 0,
+                                              onPressed: () {
+                                                setState(() {
+                                                  _videoController.value.isPlaying
+                                                      ? _videoController.pause()
+                                                      : _videoController.play();
+                                                });
+                                              },
+                                              child: Icon(
+                                                _videoController.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                                                color: const Color(0xFF0B3D2E),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : Container(
+                                        color: Colors.grey[300],
+                                        child: const Center(child: Text('Video belum tersedia / Loading...', style: TextStyle(fontSize: 10))),
+                                      ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // KARTU REFLEKSI
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(color: const Color(0xFF0B3D2E), borderRadius: BorderRadius.circular(20)),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: const [
+                                Icon(Icons.star, color: Color(0xFFE6D5B8), size: 14),
+                                SizedBox(width: 6),
+                                Text('CATATAN REFLEKSI PROYEK AKHIR', style: TextStyle(color: Color(0xFFE6D5B8), fontSize: 10, fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            const Text('Kesan & Pesan Kuliah Pemrograman Aplikasi Mobile (PAM)', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 8),
+                            const Text('"Mempelajari pemrograman Flutter membuka wawasan saya tentang cara membuat aplikasi mobile yang bermanfaat..."', style: TextStyle(color: Colors.white70, fontSize: 12, fontStyle: FontStyle.italic)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      // PENGATURAN AKUN
+                      const Text('PENGATURAN AKUN', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                      const SizedBox(height: 12),
+                      Container(
+                        decoration: BoxDecoration(color: const Color(0xFFF3E9D2), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE6D5B8))),
+                        child: Column(
+                          children: [
+                            ListTile(
+                              leading: const Icon(Icons.edit, color: Color(0xFF0B3D2E)),
+                              title: const Text('Ubah Data Identitas Diri', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                              subtitle: const Text('Nama Pribadi, Alamat, Email', style: TextStyle(fontSize: 11)),
+                              onTap: () => setState(() { isBlurred = true; activeModal = 'identity'; }),
+                            ),
+                            const Divider(height: 1),
+                            ListTile(
+                              leading: const Icon(Icons.fingerprint, color: Color(0xFF0B3D2E)),
+                              title: const Text('Verifikasi Biometrik', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                              subtitle: const Text('Pengenalan Wajah/Sidik Jari', style: TextStyle(fontSize: 11)),
+                              trailing: Switch(value: true, onChanged: (v) {}, activeColor: const Color(0xFF0B3D2E)),
+                            ),
+                            const Divider(height: 1),
+                            ListTile(
+                              leading: const Icon(Icons.lock, color: Color(0xFF0B3D2E)),
+                              title: const Text('Kata Sandi', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                              onTap: () => setState(() { isBlurred = true; activeModal = 'password'; }),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      // LOGOUT
+                      ElevatedButton.icon(
+                        onPressed: () => setState(() { isBlurred = true; activeModal = 'logout'; }),
+                        icon: const Icon(Icons.logout),
+                        label: const Text('Keluar Akun (Logout)'),
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFADBD8), foregroundColor: const Color(0xFFC0392B), minimumSize: const Size(double.infinity, 50)),
+                      ),
+                      const SizedBox(height: 24),
+                      const Center(child: Text('Srimanganti Mobile v. 1.0\n© 2026 Hak Cipta Dilindungi', textAlign: TextAlign.center, style: TextStyle(fontSize: 10, color: Colors.grey))),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ==========================================
+          // EFEK BLUR & MODAL
+          // ==========================================
+          if (isBlurred)
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+              child: Container(
+                color: Colors.black.withOpacity(0.3),
+                child: Center(
+                  child: Container(
+                    width: 320,
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(color: const Color(0xFFF9F6EE), borderRadius: BorderRadius.circular(20)),
+                    child: _buildModalContent(),
+                  ),
+                ),
+              ),
+            )
+        ],
+      ),
+    );
+  }
+
+  // Helper untuk Statistik
+  Widget _buildStat(String number, String label, {Color color = const Color(0xFF0B3D2E)}) {
+    return Column(
+      children: [
+        Text(number, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
+        Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+      ],
+    );
+  }
+
+  // Helper untuk Anggota Kelompok
+  Widget _buildMemberCard(String name, String nim) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE6D5B8)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: const BoxDecoration(color: Color(0xFF0B3D2E), shape: BoxShape.circle),
+            child: const Icon(Icons.person, color: Colors.white, size: 14),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0B3D2E))),
+                Text(nim, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper untuk Input Field
+  Widget _buildTextField(String label, TextEditingController controller, {bool isObscure = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+          const SizedBox(height: 4),
+          TextField(
+            controller: controller,
+            obscureText: isObscure,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE6D5B8))),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE6D5B8))),
+              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF0B3D2E))),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Modal Konten (Identitas, Sandi, Logout)
+  Widget _buildModalContent() {
+    if (activeModal == 'identity') {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Center(child: Text('Ubah Data Identitas', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'Serif'))),
+          const SizedBox(height: 16),
+          _buildTextField('Nama Panggilan', nameController),
+          _buildTextField('Alamat Email', emailController),
+          _buildTextField('Nomor WhatsApp', waController),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: TextButton(onPressed: () => setState(() => isBlurred = false), child: const Text('Batal', style: TextStyle(color: Colors.black)))),
+              Expanded(child: ElevatedButton(onPressed: () => setState(() => isBlurred = false), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0B3D2E)), child: const Text('Simpan'))),
+            ],
+          )
+        ],
+      );
+    } else if (activeModal == 'password') {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Center(child: Text('Ubah Kata Sandi', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'Serif'))),
+          const SizedBox(height: 16),
+          _buildTextField('Kata Sandi Lama', oldPassController, isObscure: true),
+          _buildTextField('Kata Sandi Baru', newPassController, isObscure: true),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: TextButton(onPressed: () => setState(() => isBlurred = false), child: const Text('Batal', style: TextStyle(color: Colors.black)))),
+              Expanded(child: ElevatedButton(onPressed: () => setState(() => isBlurred = false), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0B3D2E)), child: const Text('Simpan'))),
+            ],
+          )
+        ],
+      );
+    } else {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('Keluar Akun?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'Serif')),
+          const SizedBox(height: 12),
+          const Text('Apakah Anda yakin ingin keluar dari aplikasi Srimanganti?', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.grey)),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(child: TextButton(onPressed: () => setState(() => isBlurred = false), child: const Text('Batal', style: TextStyle(color: Colors.black)))),
+              Expanded(child: ElevatedButton(onPressed: () => setState(() => isBlurred = false), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC0392B)), child: const Text('Ya, Keluar'))),
+            ],
+          )
+        ],
+      );
+    }
+  }
+}

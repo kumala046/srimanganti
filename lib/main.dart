@@ -14,14 +14,18 @@ class MyApp extends StatelessWidget {
       title: 'Srimanganti App',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFFF7F5F0), // Warna Cream
-        primaryColor: const Color(0xFF1A3C2F), // Warna Dark Green
-        fontFamily: 'Serif', 
-        textTheme: const TextTheme(
-          bodyMedium: TextStyle(color: Colors.black87),
-        ),
+        scaffoldBackgroundColor: const Color(0xFFF9F6EE),
+        primaryColor: const Color(0xFF0B3D2E),
       ),
-      home: const AuthScreen(), // Panggil halaman Auth di sini
+      builder: (context, child) {
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: child,
+          ),
+        );
+      },
+      home: const AuthScreen(), 
     );
   }
 }
