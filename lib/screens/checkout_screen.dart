@@ -160,7 +160,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('WNI Reguler', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1A3C34))),
+                          Text(widget.categoryName, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1A3C34))),
                           const SizedBox(height: 2),
                           Text('${_formatRupiah(widget.basePrice)} / tiket', style: const TextStyle(fontSize: 11, color: Colors.grey)),
                         ],
