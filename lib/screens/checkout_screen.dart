@@ -5,11 +5,13 @@ import 'payment_screen.dart';
 class CheckoutScreen extends StatefulWidget {
   final String title;
   final int basePrice;
+  final String categoryName;
 
   const CheckoutScreen({
     Key? key,
     required this.title,
     required this.basePrice,
+    required this.categoryName,
   }) : super(key: key);
 
   @override
@@ -261,7 +263,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 children: [
                   const Text('RINCIAN PEMBAYARAN', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1A3C34))),
                   const SizedBox(height: 12),
-                  _buildRincianRow('Tiket WNI ($ticketCount x ${_formatRupiah(widget.basePrice)})', _formatRupiah(subtotal)),
+                  _buildRincianRow('Tiket ${widget.categoryName} ($ticketCount x ${_formatRupiah(widget.basePrice)})', _formatRupiah(subtotal)),
                   const SizedBox(height: 8),
                   _buildRincianRow('Biaya layanan', _formatRupiah(serviceFee)),
                   const Padding(
