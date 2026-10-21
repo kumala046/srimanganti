@@ -19,7 +19,7 @@ class CheckoutScreen extends StatefulWidget {
 class _CheckoutScreenState extends State<CheckoutScreen> {
   // State untuk simulasi pemilihan tanggal dan tiket
   int selectedDateIndex = 1; // Default ke tanggal 23
-  int ticketCount = 2;
+  int ticketCount = 1;
   final int serviceFee = 2000;
   final int maxTickets = 10;
 
