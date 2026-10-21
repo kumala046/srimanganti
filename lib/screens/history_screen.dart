@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tiket_srimanganti/screens/e_ticket_screen.dart';
 import '../models/ticket_model.dart';
 import 'review_screen.dart';
 
@@ -230,8 +231,26 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ),
               if (!ticket.isCompleted)
                 ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0B3D2E), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ETicketScreen(
+                          title: ticket.title,
+                          date: 'OCT 21', // Sesuaikan dengan data ticket nanti
+                          time: '09:00 - 11:00',
+                          ticketNumber: ticket.bookingCode, // Ambil dari kode booking
+                          imageAsset: 'assets/fragmen_wayang_wong_sabtu.webp', // Ganti dengan gambar yang sesuai
+                        ),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0B3D2E), 
+                    foregroundColor: Colors.white, 
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), 
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)
+                  ),
                   child: const Text('Lihat E-Tiket', style: TextStyle(fontSize: 11)),
                 )
               else

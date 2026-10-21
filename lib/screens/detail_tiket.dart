@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:tiket_srimanganti/screens/checkout_screen.dart';
 
 /* ---------------- DATA ---------------- */
 enum _Currency { idr, usd, eur, jpy }
@@ -553,10 +554,16 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
               shape: const StadiumBorder(),
             ),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Memesan tiket $_categoryName (${widget.title}) — segera hadir',
+              // --- UBAH BAGIAN INI ---
+              // Tentukan harga berdasarkan kategori yang dipilih
+              int hargaTiket = _basePriceIdr[_category]!; 
+              
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CheckoutScreen(
+                    title: widget.title,
+                    basePrice: hargaTiket,
                   ),
                 ),
               );
