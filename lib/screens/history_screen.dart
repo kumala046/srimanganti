@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:tiket_srimanganti/screens/e_ticket_screen.dart';
+
 import '../models/ticket_model.dart';
 import 'review_screen.dart';
+import '../services/db_helper.dart';
+import '../services/supabase_service.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({Key? key}) : super(key: key);
@@ -16,51 +19,69 @@ class _HistoryScreenState extends State<HistoryScreen> {
   bool isSearchActive = false;
   final TextEditingController searchController = TextEditingController();
 
-  final List<TicketModel> allTickets = [
-    TicketModel(
-      location: 'Bangsal Srimanganti',
-      status: 'Siap digunakan',
-      isCompleted: false,
-      title: 'Wayang Kulit Gagrag Ngayogyakarta',
-      subtitle: 'Kamis, 24 Okt 2024 · 09.00–11.00 WIB',
-      detail: '2 tiket · Kursi A-14, A-15',
-      bookingCode: 'KGY-SRM-20241024-089',
-      imageAsset: '', // Dikosongkan karena nanti diisi dari Beranda
-      iconBgColor: const Color(0xFF0B3D2E),
-    ),
-    TicketModel(
-      location: 'Keraton Ngayogyakarta',
-      status: 'Siap digunakan',
-      isCompleted: false,
-      title: 'Fragmen Wayang Wong',
-      subtitle: 'Sabtu, 26 Okt 2024 · 09.00–11.00 WIB',
-      detail: '1 tiket',
-      bookingCode: 'KGY-SRM-20241026-014',
-      imageAsset: '', // Dikosongkan
-      iconBgColor: const Color(0xFFB8860B),
-    ),
-    TicketModel(
-      location: 'Keraton Ngayogyakarta',
-      status: 'Selesai',
-      isCompleted: true,
-      title: 'Uyon-uyon & Tarian Klasik',
-      subtitle: 'Selasa, 15 Okt 2024 · 10.00 WIB',
-      detail: 'Tiket sudah digunakan',
-      bookingCode: 'KGY-SRM-20241015-002',
-      imageAsset: '', // Dikosongkan
-      iconBgColor: const Color(0xFF8D6E63),
-    ),
-  ];
+  // Variabel untuk menampung data dari database
+  List<TicketModel> allTickets = [];
+  bool isLoading = true;
 
+  @override
+  void initState() {
+    super.initState();
+    _loadTiketDariDatabase();
+  }
+
+  // Fungsi mengambil data dari Supabase
+  Future<void> _loadTiketDariDatabase() async {
+    try {
+      // Ambil email dari sesi SQLite lokal
+      final email = await DBHelper().getSesi();
+
+      if (email != null && email.isNotEmpty) {
+        // Tembak API Supabase
+        final data = await SupabaseService().getHistoryTiket(email);
+
+        setState(() {
+          allTickets = data.map((item) {
+            return TicketModel(
+              location: 'Bangsal Srimanganti',
+              status: item['status'] ?? 'Aktif',
+              isCompleted: item['status'] == 'Selesai',
+              title: item['judul_pagelaran'] ?? 'Pagelaran Keraton',
+              // Karena di database kita simpan timestamp, kita ambil 10 huruf pertamanya (YYYY-MM-DD)
+              subtitle:
+                  'Dibeli: ${item['created_at'].toString().substring(0, 10)}',
+              detail: '${item['jumlah_tiket']} tiket',
+              bookingCode: item['kode_booking'] ?? '-',
+              imageAsset: '',
+              iconBgColor: const Color(0xFF0B3D2E),
+            );
+          }).toList();
+          isLoading = false;
+        });
+      } else {
+        // Jika tidak ada sesi login
+        setState(() => isLoading = false);
+      }
+    } catch (e) {
+      print('Error load tiket: $e');
+      setState(() => isLoading = false);
+    }
+  }
+
+  // Fungsi filter pencarian
   List<TicketModel> get filteredTickets {
     return allTickets.where((ticket) {
       bool matchStatus = false;
-      if (selectedFilter == 'Semua') matchStatus = true;
-      else if (selectedFilter == 'Akan Datang' && !ticket.isCompleted) matchStatus = true;
-      else if (selectedFilter == 'Selesai' && ticket.isCompleted) matchStatus = true;
-      else if (selectedFilter == 'Dibatalkan') matchStatus = false;
+      if (selectedFilter == 'Semua') {
+        matchStatus = true;
+      } else if (selectedFilter == 'Akan Datang' && !ticket.isCompleted) {
+        matchStatus = true;
+      } else if (selectedFilter == 'Selesai' && ticket.isCompleted) {
+        matchStatus = true;
+      }
 
-      bool matchSearch = ticket.title.toLowerCase().contains(searchQuery.toLowerCase());
+      bool matchSearch = ticket.title.toLowerCase().contains(
+        searchQuery.toLowerCase(),
+      );
       return matchStatus && matchSearch;
     }).toList();
   }
@@ -79,7 +100,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Riwayat Tiket', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF0B3D2E), fontFamily: 'Georgia')),
+                      const Text(
+                        'Riwayat Tiket',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0B3D2E),
+                          fontFamily: 'Georgia',
+                        ),
+                      ),
                       GestureDetector(
                         onTap: () {
                           setState(() {
@@ -92,8 +121,21 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         },
                         child: Container(
                           padding: const EdgeInsets.all(8),
-                          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))]),
-                          child: const Icon(Icons.search, color: Colors.black87),
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black12,
+                                blurRadius: 4,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.search,
+                            color: Colors.black87,
+                          ),
                         ),
                       ),
                     ],
@@ -107,9 +149,21 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         hintText: 'Cari nama pentas...',
                         filled: true,
                         fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE6D5B8))),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE6D5B8))),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE6D5B8),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE6D5B8),
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -119,9 +173,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     child: Row(
                       children: [
                         _buildFilterChip('Semua'),
-                        _buildFilterChip('Akan Datang', badgeCount: '2'),
+                        _buildFilterChip(
+                          'Akan Datang',
+                          badgeCount: allTickets
+                              .where((t) => !t.isCompleted)
+                              .length
+                              .toString(),
+                        ),
                         _buildFilterChip('Selesai'),
-                        _buildFilterChip('Dibatalkan'),
                       ],
                     ),
                   ),
@@ -129,12 +188,35 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ),
             ),
             Expanded(
-              child: filteredTickets.isEmpty
-                  ? const Center(child: Text('Tiket tidak ditemukan.', style: TextStyle(color: Colors.grey, fontSize: 14)))
+              child: isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF0B3D2E),
+                      ),
+                    )
+                  : filteredTickets.isEmpty
+                  ? const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.confirmation_number_outlined,
+                            size: 50,
+                            color: Colors.grey,
+                          ),
+                          SizedBox(height: 10),
+                          Text(
+                            'Belum ada tiket.',
+                            style: TextStyle(color: Colors.grey, fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    )
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
                       itemCount: filteredTickets.length,
-                      itemBuilder: (context, index) => _buildTicketCard(filteredTickets[index]),
+                      itemBuilder: (context, index) =>
+                          _buildTicketCard(filteredTickets[index]),
                     ),
             ),
           ],
@@ -150,18 +232,38 @@ class _HistoryScreenState extends State<HistoryScreen> {
       child: Container(
         margin: const EdgeInsets.only(right: 8.0),
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        decoration: BoxDecoration(color: isActive ? const Color(0xFF0B3D2E) : const Color(0xFFE6D5B8), borderRadius: BorderRadius.circular(20)),
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xFF0B3D2E) : const Color(0xFFE6D5B8),
+          borderRadius: BorderRadius.circular(20),
+        ),
         child: Row(
           children: [
-            Text(label, style: TextStyle(color: isActive ? Colors.white : const Color(0xFF666666), fontWeight: isActive ? FontWeight.bold : FontWeight.normal, fontSize: 12)),
-            if (badgeCount != null) ...[
+            Text(
+              label,
+              style: TextStyle(
+                color: isActive ? Colors.white : const Color(0xFF666666),
+                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                fontSize: 12,
+              ),
+            ),
+            if (badgeCount != null && badgeCount != '0') ...[
               const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(color: isActive ? Colors.white : const Color(0xFF0B3D2E), shape: BoxShape.circle),
-                child: Text(badgeCount, style: TextStyle(color: isActive ? const Color(0xFF0B3D2E) : Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                decoration: BoxDecoration(
+                  color: isActive ? Colors.white : const Color(0xFF0B3D2E),
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  badgeCount,
+                  style: TextStyle(
+                    color: isActive ? const Color(0xFF0B3D2E) : Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-            ]
+            ],
           ],
         ),
       ),
@@ -172,7 +274,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16.0),
       padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))]),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -181,15 +293,39 @@ class _HistoryScreenState extends State<HistoryScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.location_on_outlined, size: 14, color: Colors.grey),
+                  const Icon(
+                    Icons.location_on_outlined,
+                    size: 14,
+                    color: Colors.grey,
+                  ),
                   const SizedBox(width: 4),
-                  Text(ticket.location, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  Text(
+                    ticket.location,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: ticket.isCompleted ? const Color(0xFFEBEBEB) : const Color(0xFFE3F0E5), borderRadius: BorderRadius.circular(12)),
-                child: Text(ticket.status, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: ticket.isCompleted ? Colors.black54 : const Color(0xFF1E5631))),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: ticket.isCompleted
+                      ? const Color(0xFFEBEBEB)
+                      : const Color(0xFFE3F0E5),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  ticket.status,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: ticket.isCompleted
+                        ? Colors.black54
+                        : const Color(0xFF1E5631),
+                  ),
+                ),
               ),
             ],
           ),
@@ -197,22 +333,51 @@ class _HistoryScreenState extends State<HistoryScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // KOTAK GAMBAR DIGANTI JADI WARNA SOLID (TANPA GAMBAR)
               Container(
-                height: 60, width: 60,
-                decoration: BoxDecoration(color: ticket.iconBgColor, borderRadius: BorderRadius.circular(12)),
-                child: const Center(child: Icon(Icons.theater_comedy, color: Colors.white, size: 30)),
+                height: 60,
+                width: 60,
+                decoration: BoxDecoration(
+                  color: ticket.iconBgColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.theater_comedy,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(ticket.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0B3D2E), fontFamily: 'Georgia')),
+                    Text(
+                      ticket.title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0B3D2E),
+                        fontFamily: 'Georgia',
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    Text(ticket.subtitle, style: const TextStyle(fontSize: 12, color: Color(0xFF666666))),
+                    Text(
+                      ticket.subtitle,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF666666),
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    Text(ticket.detail, style: const TextStyle(fontSize: 12, color: Colors.black87)),
+                    Text(
+                      ticket.detail,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.black87,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -225,8 +390,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('KODE BOOKING', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                  Text(ticket.bookingCode, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0B3D2E))),
+                  const Text(
+                    'KODE BOOKING',
+                    style: TextStyle(fontSize: 10, color: Colors.grey),
+                  ),
+                  Text(
+                    ticket.bookingCode,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0B3D2E),
+                    ),
+                  ),
                 ],
               ),
               if (!ticket.isCompleted)
@@ -237,35 +412,75 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       MaterialPageRoute(
                         builder: (context) => ETicketScreen(
                           title: ticket.title,
-                          date: 'OCT 21', // Sesuaikan dengan data ticket nanti
+                          date: 'OCT 21', // Bisa disesuaikan nanti
                           time: '09:00 - 11:00',
-                          ticketNumber: ticket.bookingCode, // Ambil dari kode booking
-                          imageAsset: 'assets/fragmen_wayang_wong_sabtu.webp', // Ganti dengan gambar yang sesuai
+                          ticketNumber: ticket.bookingCode,
+                          imageAsset: 'assets/fragmen_wayang_wong_sabtu.webp',
                         ),
                       ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0B3D2E), 
-                    foregroundColor: Colors.white, 
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), 
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)
+                    backgroundColor: const Color(0xFF0B3D2E),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                   ),
-                  child: const Text('Lihat E-Tiket', style: TextStyle(fontSize: 11)),
+                  child: const Text(
+                    'Lihat E-Tiket',
+                    style: TextStyle(fontSize: 11),
+                  ),
                 )
               else
                 Row(
                   children: [
                     OutlinedButton(
-                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ReviewScreen(ticketTitle: ticket.title))),
-                      style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF0B3D2E), side: const BorderSide(color: Colors.grey), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
-                      child: const Text('Ulasan', style: TextStyle(fontSize: 11)),
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              ReviewScreen(ticketTitle: ticket.title),
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF0B3D2E),
+                        side: const BorderSide(color: Colors.grey),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                      child: const Text(
+                        'Ulasan',
+                        style: TextStyle(fontSize: 11),
+                      ),
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: () {},
-                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0B3D2E), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
-                      child: const Text('Pesan Lagi', style: TextStyle(fontSize: 11)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0B3D2E),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                      child: const Text(
+                        'Pesan Lagi',
+                        style: TextStyle(fontSize: 11),
+                      ),
                     ),
                   ],
                 ),

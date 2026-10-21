@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import 'payment_screen.dart';
+import '../services/supabase_service.dart';
+import '../services/db_helper.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final String title;
@@ -19,13 +22,11 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  // State untuk simulasi pemilihan tanggal dan tiket
-  int selectedDateIndex = 1; // Default ke tanggal 23
+  int selectedDateIndex = 1;
   int ticketCount = 1;
   final int serviceFee = 2000;
   final int maxTickets = 10;
 
-  // Simulasi data tanggal (bisa disesuaikan dengan kalender asli nanti)
   final List<Map<String, String>> dates = [
     {'day': 'Rabu', 'date': '22 Okt'},
     {'day': 'Rabu', 'date': '23 Okt'},
@@ -37,7 +38,50 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   int get totalBayar => subtotal + serviceFee;
 
   String _formatRupiah(int amount) {
-    return NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(amount);
+    return NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    ).format(amount);
+  }
+
+  // FUNGSI SIMPAN KE SUPABASE SEBELUM BAYAR
+  void _prosesPemesanan() async {
+    // Tampilkan loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final email = await DBHelper().getSesi();
+      final kodeBooking = 'KGY-SRM-${DateTime.now().millisecondsSinceEpoch}';
+
+      await SupabaseService().createTiket(
+        userEmail: email ?? 'guest@srimanganti.com',
+        judulPagelaran: widget.title,
+        kodeBooking: kodeBooking,
+        jumlahTiket: ticketCount,
+        totalHarga: totalBayar,
+      );
+
+      if (!mounted) return;
+      Navigator.pop(context); // Tutup loading
+
+      // Pindah ke halaman pembayaran
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentScreen(totalAmount: totalBayar),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // Tutup loading
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Gagal memproses tiket: $e')));
+    }
   }
 
   @override
@@ -53,14 +97,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
         title: const Text(
           'Konfirmasi Pembayaran',
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontFamily: 'serif'),
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'serif',
+          ),
         ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // --- KARTU INFO PENTAS ---
+            // KARTU INFO PENTAS
             _buildCard(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,7 +117,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     width: 4,
                     height: 60,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFB8862B), // Warna emas
+                      color: const Color(0xFFB8862B),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -78,15 +126,40 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('PENTAS SENI KERATON', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+                        const Text(
+                          'PENTAS SENI KERATON',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                          ),
+                        ),
                         const SizedBox(height: 4),
-                        Text(widget.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A3C34), fontFamily: 'serif')),
+                        Text(
+                          widget.title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1A3C34),
+                            fontFamily: 'serif',
+                          ),
+                        ),
                         const SizedBox(height: 4),
                         const Row(
                           children: [
-                            Icon(Icons.location_on, size: 12, color: Colors.grey),
+                            Icon(
+                              Icons.location_on,
+                              size: 12,
+                              color: Colors.grey,
+                            ),
                             SizedBox(width: 4),
-                            Text('Bangsal Srimanganti, Keraton Yogyakarta', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                            Text(
+                              'Bangsal Srimanganti, Keraton Yogyakarta',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey,
+                              ),
+                            ),
                           ],
                         ),
                       ],
@@ -97,7 +170,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
             const SizedBox(height: 12),
 
-            // --- PILIH TANGGAL ---
+            // PILIH TANGGAL
             _buildCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,8 +178,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: const [
-                      Text('PILIH TANGGAL KUNJUNGAN', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1A3C34))),
-                      Text('Okt 2026', style: TextStyle(fontSize: 11, color: Color(0xFFB8862B), fontWeight: FontWeight.bold)),
+                      Text(
+                        'PILIH TANGGAL KUNJUNGAN',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1A3C34),
+                        ),
+                      ),
+                      Text(
+                        'Okt 2026',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFFB8862B),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -117,17 +204,39 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       return GestureDetector(
                         onTap: () => setState(() => selectedDateIndex = index),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
-                            color: isSelected ? const Color(0xFF1A3C34) : Colors.white,
+                            color: isSelected
+                                ? const Color(0xFF1A3C34)
+                                : Colors.white,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: const Color(0xFFEADFCB)),
                           ),
                           child: Column(
                             children: [
-                              Text(dates[index]['day']!, style: TextStyle(fontSize: 10, color: isSelected ? Colors.white70 : Colors.grey)),
+                              Text(
+                                dates[index]['day']!,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: isSelected
+                                      ? Colors.white70
+                                      : Colors.grey,
+                                ),
+                              ),
                               const SizedBox(height: 4),
-                              Text(dates[index]['date']!, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isSelected ? Colors.white : const Color(0xFF1A3C34))),
+                              Text(
+                                dates[index]['date']!,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : const Color(0xFF1A3C34),
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -139,7 +248,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     children: [
                       Icon(Icons.circle, size: 6, color: Color(0xFF1A3C34)),
                       SizedBox(width: 6),
-                      Text('Tersedia jadwal setiap hari Rabu', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                      Text(
+                        'Tersedia jadwal setiap hari Rabu',
+                        style: TextStyle(fontSize: 10, color: Colors.grey),
+                      ),
                     ],
                   ),
                 ],
@@ -147,12 +259,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
             const SizedBox(height: 12),
 
-            // --- JUMLAH TIKET ---
+            // JUMLAH TIKET
             _buildCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('JUMLAH TIKET', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1A3C34))),
+                  const Text(
+                    'JUMLAH TIKET',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1A3C34),
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -160,9 +279,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(widget.categoryName, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1A3C34))),
+                          Text(
+                            widget.categoryName,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1A3C34),
+                            ),
+                          ),
                           const SizedBox(height: 2),
-                          Text('${_formatRupiah(widget.basePrice)} / tiket', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                          Text(
+                            '${_formatRupiah(widget.basePrice)} / tiket',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey,
+                            ),
+                          ),
                         ],
                       ),
                       Container(
@@ -174,12 +306,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           children: [
                             IconButton(
                               icon: const Icon(Icons.remove, size: 16),
-                              onPressed: ticketCount > 1 ? () => setState(() => ticketCount--) : null,
+                              onPressed: ticketCount > 1
+                                  ? () => setState(() => ticketCount--)
+                                  : null,
                             ),
-                            Text('$ticketCount', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                            Text(
+                              '$ticketCount',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             IconButton(
                               icon: const Icon(Icons.add, size: 16),
-                              onPressed: ticketCount < maxTickets ? () => setState(() => ticketCount++) : null,
+                              onPressed: ticketCount < maxTickets
+                                  ? () => setState(() => ticketCount++)
+                                  : null,
                             ),
                           ],
                         ),
@@ -187,44 +329,88 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  const Text('Maksimal 10 tiket per transaksi.', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                  const Text(
+                    'Maksimal 10 tiket per transaksi.',
+                    style: TextStyle(fontSize: 10, color: Colors.grey),
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: 12),
 
-            // --- METODE PEMBAYARAN ---
+            // METODE PEMBAYARAN
             _buildCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('METODE PEMBAYARAN', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1A3C34))),
+                  const Text(
+                    'METODE PEMBAYARAN',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1A3C34),
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF7F5F0),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFF1A3C34), width: 1.5),
+                      border: Border.all(
+                        color: const Color(0xFF1A3C34),
+                        width: 1.5,
+                      ),
                     ),
                     child: Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4), border: Border.all(color: Colors.grey.shade300)),
-                          child: const Text('QRIS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF1A3C34))),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: const Text(
+                            'QRIS',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1A3C34),
+                            ),
+                          ),
                         ),
                         const SizedBox(width: 12),
                         const Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('QRIS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1A3C34))),
-                              Text('Bank dan e-wallet apa saja (BCA, Mandiri, GoPay, OVO, dll.)', style: TextStyle(fontSize: 9, color: Colors.grey)),
+                              Text(
+                                'QRIS',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1A3C34),
+                                ),
+                              ),
+                              Text(
+                                'Bank dan e-wallet apa saja',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  color: Colors.grey,
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                        const Icon(Icons.check_circle, color: Color(0xFF1A3C34), size: 20),
+                        const Icon(
+                          Icons.check_circle,
+                          color: Color(0xFF1A3C34),
+                          size: 20,
+                        ),
                       ],
                     ),
                   ),
@@ -233,7 +419,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
             const SizedBox(height: 12),
 
-            // --- INFO NOTIFIKASI ---
+            // INFO NOTIFIKASI
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -247,8 +433,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Informasi tiket dan konfirmasi pemesanan akan dikirim ke alamat email pemesan sesuai data yang tercantum.',
-                      style: TextStyle(fontSize: 10, color: Color(0xFF1A3C34), height: 1.4),
+                      'Informasi tiket dan konfirmasi pemesanan akan dikirim ke alamat email pemesan.',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Color(0xFF1A3C34),
+                        height: 1.4,
+                      ),
                     ),
                   ),
                 ],
@@ -256,14 +446,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
             const SizedBox(height: 12),
 
-            // --- RINCIAN PEMBAYARAN ---
+            // RINCIAN PEMBAYARAN
             _buildCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('RINCIAN PEMBAYARAN', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1A3C34))),
+                  const Text(
+                    'RINCIAN PEMBAYARAN',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1A3C34),
+                    ),
+                  ),
                   const SizedBox(height: 12),
-                  _buildRincianRow('Tiket ${widget.categoryName} ($ticketCount x ${_formatRupiah(widget.basePrice)})', _formatRupiah(subtotal)),
+                  _buildRincianRow(
+                    'Tiket ${widget.categoryName} ($ticketCount x ${_formatRupiah(widget.basePrice)})',
+                    _formatRupiah(subtotal),
+                  ),
                   const SizedBox(height: 8),
                   _buildRincianRow('Biaya layanan', _formatRupiah(serviceFee)),
                   const Padding(
@@ -273,24 +473,44 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Total Pembayaran', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1A3C34))),
-                      Text(_formatRupiah(totalBayar), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A3C34))),
+                      const Text(
+                        'Total Pembayaran',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1A3C34),
+                        ),
+                      ),
+                      Text(
+                        _formatRupiah(totalBayar),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1A3C34),
+                        ),
+                      ),
                     ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 100), // Spasi untuk bottom bar
+            const SizedBox(height: 100),
           ],
         ),
       ),
 
-      // --- BOTTOM BAR ---
+      // BOTTOM BAR (UBAH ONPRESSED-NYA)
       bottomNavigationBar: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
           color: Colors.white,
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
         ),
         child: SafeArea(
           child: Row(
@@ -300,28 +520,43 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('TOTAL BAYAR', style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
-                  Text(_formatRupiah(totalBayar), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1A3C34))),
+                  const Text(
+                    'TOTAL BAYAR',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    _formatRupiah(totalBayar),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1A3C34),
+                    ),
+                  ),
                 ],
               ),
               ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => PaymentScreen(totalAmount: totalBayar),
-                    ),
-                  );
-                },
+                onPressed: _prosesPemesanan, // Memanggil fungsi database
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1A3C34),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 child: const Row(
                   children: [
-                    Text('Konfirmasi & Bayar', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text(
+                      'Konfirmasi & Bayar',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     SizedBox(width: 8),
                     Icon(Icons.arrow_forward, size: 16),
                   ],
@@ -352,7 +587,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1A3C34))),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1A3C34),
+          ),
+        ),
       ],
     );
   }

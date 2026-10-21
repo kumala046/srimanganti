@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'main_navigation_screen.dart'; // <-- TAMBAHAN BUAT PINDAH HALAMAN
+
+import 'main_navigation_screen.dart';
+import '../services/db_helper.dart';
+import '../services/supabase_service.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({Key? key}) : super(key: key);
@@ -9,23 +12,25 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
-  bool isLogin = true; // Toggle antara Login dan Register
+  bool isLogin = true;
   bool isPasswordVisible = false;
 
-  // Controller untuk form
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController namaController = TextEditingController();
   final TextEditingController waController = TextEditingController();
-  final TextEditingController konfirmasiPasswordController = TextEditingController();
+  final TextEditingController konfirmasiPasswordController =
+      TextEditingController();
 
-  // FUNGSI UNTUK PINDAH KE HALAMAN UTAMA (PUNYAMU)
-  void _masukKeAplikasi() {
+  // FUNGSI PINDAH HALAMAN + SIMPAN SESI LOKAL
+  void _masukKeAplikasi() async {
+    // Simpan email ke SQLite lokal agar History bisa baca
+    await DBHelper().simpanSesi(emailController.text);
+
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(
-        builder: (context) => const MainNavigationScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
     );
   }
 
@@ -38,7 +43,6 @@ class _AuthScreenState extends State<AuthScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // --- JUDUL APLIKASI ---
               const SizedBox(height: 40),
               const Text(
                 'SRIMANGANTI',
@@ -47,12 +51,12 @@ class _AuthScreenState extends State<AuthScreen> {
                   fontWeight: FontWeight.w900,
                   letterSpacing: 2.0,
                   color: Color(0xFF1A3C2F),
-                  fontFamily: 'Georgia', // Fallback font Serif
+                  fontFamily: 'Georgia',
                 ),
               ),
               const SizedBox(height: 40),
 
-              // --- TOGGLE LOGIN / REGISTER ---
+              // TOGGLE LOGIN / REGISTER
               Container(
                 height: 50,
                 decoration: BoxDecoration(
@@ -67,7 +71,9 @@ class _AuthScreenState extends State<AuthScreen> {
                         child: Container(
                           margin: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: isLogin ? const Color(0xFF1A3C2F) : Colors.transparent,
+                            color: isLogin
+                                ? const Color(0xFF1A3C2F)
+                                : Colors.transparent,
                             borderRadius: BorderRadius.circular(25),
                           ),
                           alignment: Alignment.center,
@@ -87,7 +93,9 @@ class _AuthScreenState extends State<AuthScreen> {
                         child: Container(
                           margin: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: !isLogin ? const Color(0xFF1A3C2F) : Colors.transparent,
+                            color: !isLogin
+                                ? const Color(0xFF1A3C2F)
+                                : Colors.transparent,
                             borderRadius: BorderRadius.circular(25),
                           ),
                           alignment: Alignment.center,
@@ -106,7 +114,6 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
               const SizedBox(height: 40),
 
-              // --- FORM AREA ---
               if (isLogin) _buildLoginForm() else _buildRegisterForm(),
             ],
           ),
@@ -116,7 +123,7 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   // ==========================================
-  // WIDGET FORM LOGIN (TOMBOL SUDAH BERFUNGSI)
+  // FORM LOGIN
   // ==========================================
   Widget _buildLoginForm() {
     return Column(
@@ -137,15 +144,15 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
         const SizedBox(height: 40),
 
-        // Tombol Biometric & Login
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Tombol Biometric (Fingerprint)
             GestureDetector(
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Fitur Biometric akan diimplementasikan')),
+                  const SnackBar(
+                    content: Text('Fitur Biometric akan diimplementasikan'),
+                  ),
                 );
               },
               child: Container(
@@ -155,15 +162,18 @@ class _AuthScreenState extends State<AuthScreen> {
                   color: Color(0xFF1A3C2F),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.fingerprint, color: Colors.white, size: 30),
+                child: const Icon(
+                  Icons.fingerprint,
+                  color: Colors.white,
+                  size: 30,
+                ),
               ),
             ),
             const SizedBox(width: 16),
-            // Tombol Login
             Expanded(
               child: ElevatedButton(
                 onPressed: () {
-                  // PINDAH KE HALAMAN UTAMA
+                  // Panggil fungsi masuk
                   _masukKeAplikasi();
                 },
                 style: ElevatedButton.styleFrom(
@@ -184,7 +194,7 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   // ==========================================
-  // WIDGET FORM REGISTER (TOMBOL SUDAH BERFUNGSI)
+  // FORM REGISTER (DENGAN SIMPAN KE SUPABASE)
   // ==========================================
   Widget _buildRegisterForm() {
     return Column(
@@ -194,24 +204,56 @@ class _AuthScreenState extends State<AuthScreen> {
         _buildTextField(controller: namaController, hint: ''),
         const SizedBox(height: 16),
 
+        _buildLabel('Email'), // DITAMBAHKAN: Email dibutuhkan untuk database
+        _buildTextField(
+          controller: emailController,
+          hint: '',
+          keyboardType: TextInputType.emailAddress,
+        ),
+        const SizedBox(height: 16),
+
         _buildLabel('Nomor WhatsApp'),
-        _buildTextField(controller: waController, hint: '', keyboardType: TextInputType.phone),
+        _buildTextField(
+          controller: waController,
+          hint: '',
+          keyboardType: TextInputType.phone,
+        ),
         const SizedBox(height: 16),
 
         _buildLabel('Password'),
-        _buildTextField(controller: passwordController, hint: '', isPassword: true),
+        _buildTextField(
+          controller: passwordController,
+          hint: '',
+          isPassword: true,
+        ),
         const SizedBox(height: 16),
 
         _buildLabel('Konfirmasi Password'),
-        _buildTextField(controller: konfirmasiPasswordController, hint: '', isPassword: true),
+        _buildTextField(
+          controller: konfirmasiPasswordController,
+          hint: '',
+          isPassword: true,
+        ),
         const SizedBox(height: 30),
 
-        // Tombol Register
         Center(
           child: ElevatedButton(
-            onPressed: () {
-              // PINDAH KE HALAMAN UTAMA
-              _masukKeAplikasi();
+            onPressed: () async {
+              // Proses simpan ke Supabase
+              try {
+                await SupabaseService().createUser(
+                  email: emailController.text,
+                  nama: namaController.text,
+                  noWa: waController.text,
+                  kewarganegaraan: 'WNI',
+                );
+                // Jika sukses, pindah ke home
+                _masukKeAplikasi();
+              } catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text('Gagal daftar: $e')));
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1A3C2F),
@@ -259,7 +301,10 @@ class _AuthScreenState extends State<AuthScreen> {
         hintText: hint,
         filled: true,
         fillColor: const Color(0xFFF7F5F0),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 16,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
           borderSide: const BorderSide(color: Colors.black87, width: 1.0),

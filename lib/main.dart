@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'screens/auth_screen.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // GANTI URL DAN KEY DI BAWAH INI DENGAN PUNYAMU
+  await Supabase.initialize(
+    url: 'https://[URL_PROJECT_KAMU].supabase.co',
+    anonKey: 'sb_publishable__oM_IvEUvWU2b_gDwHwtVA_GtZ_ZLAb',
+  );
+
   runApp(const MyApp());
 }
 
@@ -18,7 +28,7 @@ class MyApp extends StatelessWidget {
         primaryColor: const Color(0xFF1A3C2F),
         fontFamily: 'serif',
       ),
-      home: const AuthScreen(), // Mulai dari Login
+      home: const AuthScreen(),
     );
   }
 }
