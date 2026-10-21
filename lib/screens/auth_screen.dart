@@ -22,16 +22,39 @@ class _AuthScreenState extends State<AuthScreen> {
   final TextEditingController konfirmasiPasswordController =
       TextEditingController();
 
-  // FUNGSI PINDAH HALAMAN + SIMPAN SESI LOKAL
-  void _masukKeAplikasi() async {
-    // Simpan email ke SQLite lokal agar History bisa baca
-    await DBHelper().simpanSesi(emailController.text);
+  // FUNGSI LOGIN DENGAN VALIDASI
+  void _prosesLogin() async {
+    String email = emailController.text.trim();
+    String password = passwordController.text;
 
-    if (!mounted) return;
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
-    );
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Email dan Password tidak boleh kosong!'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    bool isUserValid = await DBHelper().cekLoginLokal(email, password);
+
+    if (isUserValid) {
+      await DBHelper().simpanSesi(email);
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
+      );
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Email atau Password salah!'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -172,10 +195,7 @@ class _AuthScreenState extends State<AuthScreen> {
             const SizedBox(width: 16),
             Expanded(
               child: ElevatedButton(
-                onPressed: () {
-                  // Panggil fungsi masuk
-                  _masukKeAplikasi();
-                },
+                onPressed: _prosesLogin,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1A3C2F),
                   foregroundColor: Colors.white,
@@ -194,7 +214,7 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   // ==========================================
-  // FORM REGISTER (DENGAN SIMPAN KE SUPABASE)
+  // FORM REGISTER (SIMPAN KE SUPABASE & SQLITE)
   // ==========================================
   Widget _buildRegisterForm() {
     return Column(
@@ -204,7 +224,7 @@ class _AuthScreenState extends State<AuthScreen> {
         _buildTextField(controller: namaController, hint: ''),
         const SizedBox(height: 16),
 
-        _buildLabel('Email'), // DITAMBAHKAN: Email dibutuhkan untuk database
+        _buildLabel('Email'),
         _buildTextField(
           controller: emailController,
           hint: '',
@@ -239,20 +259,70 @@ class _AuthScreenState extends State<AuthScreen> {
         Center(
           child: ElevatedButton(
             onPressed: () async {
-              // Proses simpan ke Supabase
+              if (passwordController.text != konfirmasiPasswordController.text) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Konfirmasi password tidak cocok!'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
+              if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+                 ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Email dan Password tidak boleh kosong!'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
               try {
+                // 1. Simpan ke Supabase (Online)
                 await SupabaseService().createUser(
-                  email: emailController.text,
+                  email: emailController.text.trim(),
                   nama: namaController.text,
                   noWa: waController.text,
                   kewarganegaraan: 'WNI',
                 );
-                // Jika sukses, pindah ke home
-                _masukKeAplikasi();
+
+                // 2. Simpan ke SQLite (Lokal)
+                final db = await DBHelper().database;
+                await db.insert('users', {
+                  'email': emailController.text.trim(),
+                  'password': passwordController.text,
+                  'nama_lengkap': namaController.text,
+                  'no_whatsapp': waController.text,
+                });
+
+                // 3. Simpan sesi dan masuk
+                // 3. Berhasil daftar, arahkan ke form Login
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Registrasi Berhasil! Silakan Login.'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+                
+                setState(() {
+                  isLogin = true; // Pindah tampilan ke form Login
+                  passwordController.clear();
+                  konfirmasiPasswordController.clear();
+                  // (Opsional) Kosongkan juga email dan nama jika mau
+                  // emailController.clear();
+                  // namaController.clear();
+                });
               } catch (e) {
                 if (!mounted) return;
-                ScaffoldMessenger.of(context)
-                    .showSnackBar(SnackBar(content: Text('Gagal daftar: $e')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Gagal daftar: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
               }
             },
             style: ElevatedButton.styleFrom(

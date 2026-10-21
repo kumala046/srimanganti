@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
 import 'screens/auth_screen.dart';
 
 Future<void> main() async {
@@ -8,7 +7,7 @@ Future<void> main() async {
 
   // GANTI URL DAN KEY DI BAWAH INI DENGAN PUNYAMU
   await Supabase.initialize(
-    url: 'https://[URL_PROJECT_KAMU].supabase.co',
+    url: 'https://ekyzvgrqmcthugakpvgy.supabase.co',
     anonKey: 'sb_publishable__oM_IvEUvWU2b_gDwHwtVA_GtZ_ZLAb',
   );
 

@@ -1,14 +1,12 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseService {
-  // Mendapatkan instance client Supabase
   final SupabaseClient _client = Supabase.instance.client;
 
   // ==========================================
   // FUNGSI UNTUK USER (AUTH & PROFIL)
   // ==========================================
 
-  // 1. Simpan User Baru saat Register
   Future<void> createUser({
     required String email,
     required String nama,
@@ -27,7 +25,6 @@ class SupabaseService {
     }
   }
 
-  // 2. Ambil Data User berdasarkan Email
   Future<Map<String, dynamic>?> getUserProfile(String email) async {
     final response = await _client
         .from('users')
@@ -37,11 +34,39 @@ class SupabaseService {
     return response;
   }
 
+  // FUNGSI BARU: Update Profil ke Supabase
+  Future<void> updateProfile({
+    required String email,
+    required String nama,
+    required String noWa,
+  }) async {
+    try {
+      await _client.from('users').update({
+        'nama_lengkap': nama,
+        'no_whatsapp': noWa,
+      }).eq('email', email);
+    } catch (e) {
+      throw Exception('Gagal update profil online: $e');
+    }
+  }
+
+  // FUNGSI BARU: Update Password ke Supabase
+  Future<void> updatePassword({
+    required String email,
+    required String newPassword,
+  }) async {
+    try {
+      await _client.from('users').update({
+        'password': newPassword, // Pastikan kolom password ada di tabel users Supabase
+      }).eq('email', email);
+    } catch (e) {
+      throw Exception('Gagal update password online: $e');
+    }
+  }
+
   // ==========================================
   // FUNGSI UNTUK PAGELARAN (EVENT)
   // ==========================================
-
-  // 3. Ambil Semua Pagelaran
   Future<List<Map<String, dynamic>>> getPagelaran() async {
     try {
       final response = await _client.from('pagelaran').select();
@@ -54,8 +79,6 @@ class SupabaseService {
   // ==========================================
   // FUNGSI UNTUK TIKET
   // ==========================================
-
-  // 4. Simpan Tiket Baru (Disesuaikan dengan checkout_screen)
   Future<void> createTiket({
     required String userEmail,
     required String judulPagelaran,
@@ -66,7 +89,7 @@ class SupabaseService {
     try {
       await _client.from('tiket').insert({
         'user_email': userEmail,
-        'judul_pagelaran': judulPagelaran,
+        'judul_pagelaran': judulPagelaran, 
         'kode_booking': kodeBooking,
         'jumlah_tiket': jumlahTiket,
         'total_harga': totalHarga,
@@ -77,7 +100,6 @@ class SupabaseService {
     }
   }
 
-  // 5. Ambil Riwayat Tiket milik User
   Future<List<Map<String, dynamic>>> getHistoryTiket(String email) async {
     try {
       final response = await _client

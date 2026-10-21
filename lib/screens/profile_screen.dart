@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'dart:io';
 import 'package:video_player/video_player.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+
+import '../services/db_helper.dart';
+import '../services/supabase_service.dart'; // TAMBAHKAN IMPORT INI
+import 'auth_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -11,21 +18,29 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool isBlurred = false;
-  String activeModal = ''; 
+  String activeModal = '';
 
-  final TextEditingController nameController = TextEditingController(text: 'Raden Aryo Tejo');
-  final TextEditingController emailController = TextEditingController(text: 'aryotejo@srimanganti.com');
-  final TextEditingController waController = TextEditingController(text: '0857 1234 5678');
+  String namaLengkap = 'Memuat...';
+  String emailUser = 'Memuat...';
+  String waUser = 'Memuat...';
+  String? fotoProfilPath; 
+
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController waController = TextEditingController();
   final TextEditingController oldPassController = TextEditingController();
   final TextEditingController newPassController = TextEditingController();
 
   late VideoPlayerController _videoController;
   bool _isVideoInitialized = false;
 
+  final ImagePicker _picker = ImagePicker();
+
   @override
   void initState() {
     super.initState();
-    // Inisialisasi Video
+    _loadUserData();
+    
     _videoController = VideoPlayerController.asset('assets/video_kraton.mp4')
       ..initialize().then((_) {
         setState(() {
@@ -34,6 +49,158 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }).catchError((error) {
         print("Video belum ditambahkan di folder assets.");
       });
+  }
+
+  Future<void> _loadUserData() async {
+    final email = await DBHelper().getSesi();
+    if (email != null) {
+      final user = await DBHelper().getUserByEmail(email);
+      if (user != null && mounted) {
+        final directory = await getApplicationDocumentsDirectory();
+        final file = File('${directory.path}/profile_$email.jpg');
+        
+        setState(() {
+          namaLengkap = user['nama_lengkap'] ?? 'User';
+          emailUser = user['email'] ?? '-';
+          waUser = user['no_whatsapp'] ?? '-';
+          
+          nameController.text = namaLengkap;
+          emailController.text = emailUser;
+          waController.text = waUser;
+
+          if (file.existsSync()) {
+            fotoProfilPath = file.path;
+          }
+        });
+      }
+    }
+  }
+
+  Future<void> _gantiFoto() async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
+      if (image != null) {
+        final directory = await getApplicationDocumentsDirectory();
+        final email = await DBHelper().getSesi();
+        final fileName = 'profile_$email.jpg';
+        final savedImage = await File(image.path).copy('${directory.path}/$fileName');
+
+        setState(() {
+          fotoProfilPath = savedImage.path;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Foto profil berhasil diubah!'), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal mengambil foto: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  // ==========================================
+  // UPDATE: SIMPAN DATA DIRI (LOKAL & ONLINE)
+  // ==========================================
+  Future<void> _simpanIdentitas() async {
+    setState(() => isBlurred = false); // Tutup modal dulu
+    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+
+    try {
+      // 1. Simpan ke SQLite (Lokal)
+      final db = await DBHelper().database;
+      await db.update(
+        'users',
+        {
+          'nama_lengkap': nameController.text,
+          'no_whatsapp': waController.text,
+        },
+        where: 'email = ?',
+        whereArgs: [emailUser],
+      );
+
+      // 2. Simpan ke Supabase (Online)
+      await SupabaseService().updateProfile(
+        email: emailUser,
+        nama: nameController.text,
+        noWa: waController.text,
+      );
+
+      setState(() {
+        namaLengkap = nameController.text;
+        waUser = waController.text;
+      });
+
+      if (!mounted) return;
+      Navigator.pop(context); // Tutup loading
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Data diri berhasil diperbarui di Lokal & Online!'), backgroundColor: Colors.green),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // Tutup loading
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal update: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  // ==========================================
+  // UPDATE: GANTI PASSWORD (LOKAL & ONLINE)
+  // ==========================================
+  Future<void> _simpanPassword() async {
+    setState(() => isBlurred = false); // Tutup modal dulu
+    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+
+    try {
+      final db = await DBHelper().database;
+      
+      // 1. Cek password lama di SQLite
+      final result = await db.query(
+        'users',
+        where: 'email = ? AND password = ?',
+        whereArgs: [emailUser, oldPassController.text],
+      );
+
+      if (result.isEmpty) {
+        if (!mounted) return;
+        Navigator.pop(context); // Tutup loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Kata sandi lama salah!'), backgroundColor: Colors.red),
+        );
+        return;
+      }
+
+      // 2. Update password di SQLite
+      await db.update(
+        'users',
+        {'password': newPassController.text},
+        where: 'email = ?',
+        whereArgs: [emailUser],
+      );
+
+      // 3. Update password di Supabase
+      await SupabaseService().updatePassword(
+        email: emailUser,
+        newPassword: newPassController.text,
+      );
+
+      oldPassController.clear();
+      newPassController.clear();
+
+      if (!mounted) return;
+      Navigator.pop(context); // Tutup loading
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Kata sandi berhasil diubah!'), backgroundColor: Colors.green),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // Tutup loading
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal update password: $e'), backgroundColor: Colors.red),
+      );
+    }
   }
 
   @override
@@ -47,13 +214,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // ==========================================
-          // KONTEN UTAMA PROFIL
-          // ==========================================
           SafeArea(
             child: Column(
               children: [
-                // HEADER
                 Container(
                   padding: const EdgeInsets.all(24),
                   color: const Color(0xFF0B3D2E),
@@ -71,7 +234,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                 ),
-                
+
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.all(24),
@@ -82,16 +245,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         decoration: BoxDecoration(color: const Color(0xFFFFFBEB), borderRadius: BorderRadius.circular(24), border: Border.all(color: const Color(0xFFF0EAD6))),
                         child: Column(
                           children: [
-                            ClipOval(
-                              child: Image.asset('assets/profil.jpg', width: 90, height: 90, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.person, size: 90)),
+                            Stack(
+                              children: [
+                                ClipOval(
+                                  child: fotoProfilPath != null
+                                      ? Image.file(File(fotoProfilPath!), width: 90, height: 90, fit: BoxFit.cover)
+                                      : Image.asset('assets/profil.jpg', width: 90, height: 90, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.person, size: 90)),
+                                ),
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: GestureDetector(
+                                    onTap: _gantiFoto,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(color: const Color(0xFF1A3C34), shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
+                                      child: const Icon(Icons.camera_alt, color: Colors.white, size: 14),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 12),
-                            const Text('Raden Aryo Tejo', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF0B3D2E), fontFamily: 'Serif')),
+                            Text(namaLengkap, textAlign: TextAlign.center, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF0B3D2E), fontFamily: 'Serif')),
                             const SizedBox(height: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                               decoration: BoxDecoration(color: const Color(0xFFE6D5B8), borderRadius: BorderRadius.circular(20)),
-                              child: const Text('@aryotejo • KeratonID #KY-88219', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF153D1F))),
+                              child: Text(emailUser, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF153D1F))),
                             ),
                             const SizedBox(height: 16),
                             const Divider(),
@@ -109,9 +290,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 24),
 
-                      // ==========================================
-                      // KARTU ANGGOTA KELOMPOK & VIDEO
-                      // ==========================================
+                      // ... (KARTU ANGGOTA KELOMPOK & VIDEO, SAMA SEPERTI SEBELUMNYA)
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(color: const Color(0xFFF3E9D2), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFE6D5B8))),
@@ -122,7 +301,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               children: const [
                                 Icon(Icons.groups, color: Color(0xFF0B3D2E), size: 18),
                                 SizedBox(width: 8),
-                                // JUDUL DIGANTI
                                 Text('ANGGOTA KELOMPOK', style: TextStyle(color: Color(0xFF0B3D2E), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
                               ],
                             ),
@@ -133,11 +311,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             const SizedBox(height: 8),
                             _buildMemberCard('Nurisshifa Alfiyana', '124240186'),
                             const SizedBox(height: 20),
-                            
                             const Text('Dokumentasi Kunjungan', style: TextStyle(color: Color(0xFF0B3D2E), fontSize: 12, fontWeight: FontWeight.bold)),
                             const SizedBox(height: 8),
-                            
-                            // VIDEO PLAYER DENGAN TOMBOL PLAY KECIL
                             ClipRRect(
                               borderRadius: BorderRadius.circular(12),
                               child: AspectRatio(
@@ -149,15 +324,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           GestureDetector(
                                             onTap: () {
                                               setState(() {
-                                                _videoController.value.isPlaying
-                                                    ? _videoController.pause()
-                                                    : _videoController.play();
+                                                _videoController.value.isPlaying ? _videoController.pause() : _videoController.play();
                                               });
                                             },
-                                            child: Container(
-                                              color: Colors.black,
-                                              child: VideoPlayer(_videoController),
-                                            ),
+                                            child: Container(color: Colors.black, child: VideoPlayer(_videoController)),
                                           ),
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
@@ -166,23 +336,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               elevation: 0,
                                               onPressed: () {
                                                 setState(() {
-                                                  _videoController.value.isPlaying
-                                                      ? _videoController.pause()
-                                                      : _videoController.play();
+                                                  _videoController.value.isPlaying ? _videoController.pause() : _videoController.play();
                                                 });
                                               },
-                                              child: Icon(
-                                                _videoController.value.isPlaying ? Icons.pause : Icons.play_arrow,
-                                                color: const Color(0xFF0B3D2E),
-                                              ),
+                                              child: Icon(_videoController.value.isPlaying ? Icons.pause : Icons.play_arrow, color: const Color(0xFF0B3D2E)),
                                             ),
                                           ),
                                         ],
                                       )
-                                    : Container(
-                                        color: Colors.grey[300],
-                                        child: const Center(child: Text('Video belum tersedia / Loading...', style: TextStyle(fontSize: 10))),
-                                      ),
+                                    : Container(color: Colors.grey[300], child: const Center(child: Text('Video belum tersedia / Loading...', style: TextStyle(fontSize: 10)))),
                               ),
                             ),
                           ],
@@ -260,9 +422,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
 
-          // ==========================================
-          // EFEK BLUR & MODAL
-          // ==========================================
           if (isBlurred)
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
@@ -283,7 +442,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Helper untuk Statistik
   Widget _buildStat(String number, String label, {Color color = const Color(0xFF0B3D2E)}) {
     return Column(
       children: [
@@ -293,15 +451,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Helper untuk Anggota Kelompok
   Widget _buildMemberCard(String name, String nim) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE6D5B8)),
-      ),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE6D5B8))),
       child: Row(
         children: [
           Container(
@@ -324,8 +477,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Helper untuk Input Field
-  Widget _buildTextField(String label, TextEditingController controller, {bool isObscure = false}) {
+  Widget _buildTextField(String label, TextEditingController controller, {bool isObscure = false, bool readOnly = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
@@ -336,9 +488,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           TextField(
             controller: controller,
             obscureText: isObscure,
+            readOnly: readOnly,
             decoration: InputDecoration(
               filled: true,
-              fillColor: Colors.white,
+              fillColor: readOnly ? Colors.grey[200] : Colors.white,
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE6D5B8))),
               enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE6D5B8))),
@@ -350,7 +503,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Modal Konten (Identitas, Sandi, Logout)
   Widget _buildModalContent() {
     if (activeModal == 'identity') {
       return Column(
@@ -359,14 +511,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           const Center(child: Text('Ubah Data Identitas', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'Serif'))),
           const SizedBox(height: 16),
-          _buildTextField('Nama Panggilan', nameController),
-          _buildTextField('Alamat Email', emailController),
+          _buildTextField('Nama Lengkap', nameController),
+          _buildTextField('Alamat Email', emailController, readOnly: true),
           _buildTextField('Nomor WhatsApp', waController),
           const SizedBox(height: 12),
           Row(
             children: [
               Expanded(child: TextButton(onPressed: () => setState(() => isBlurred = false), child: const Text('Batal', style: TextStyle(color: Colors.black)))),
-              Expanded(child: ElevatedButton(onPressed: () => setState(() => isBlurred = false), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0B3D2E)), child: const Text('Simpan'))),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _simpanIdentitas,
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0B3D2E)),
+                  child: const Text('Simpan'),
+                ),
+              ),
             ],
           )
         ],
@@ -384,7 +542,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             children: [
               Expanded(child: TextButton(onPressed: () => setState(() => isBlurred = false), child: const Text('Batal', style: TextStyle(color: Colors.black)))),
-              Expanded(child: ElevatedButton(onPressed: () => setState(() => isBlurred = false), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0B3D2E)), child: const Text('Simpan'))),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _simpanPassword,
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0B3D2E)),
+                  child: const Text('Simpan'),
+                ),
+              ),
             ],
           )
         ],
@@ -400,7 +564,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             children: [
               Expanded(child: TextButton(onPressed: () => setState(() => isBlurred = false), child: const Text('Batal', style: TextStyle(color: Colors.black)))),
-              Expanded(child: ElevatedButton(onPressed: () => setState(() => isBlurred = false), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC0392B)), child: const Text('Ya, Keluar'))),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    await DBHelper().hapusSesi();
+                    if (!mounted) return;
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => const AuthScreen()),
+                      (route) => false,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC0392B)),
+                  child: const Text('Ya, Keluar'),
+                ),
+              ),
             ],
           )
         ],
