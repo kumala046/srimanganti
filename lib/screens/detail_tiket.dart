@@ -554,9 +554,10 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
               shape: const StadiumBorder(),
             ),
             onPressed: () {
-              // --- UBAH BAGIAN INI ---
               // Tentukan harga berdasarkan kategori yang dipilih
-              int hargaTiket = _basePriceIdr[_category]!; 
+              int hargaTiket = _basePriceIdr[_category]!;
+
+              String namaKategori = _category == _Category.wni ? 'WNI Reguler' : 'WNA Foreigner';
               
               Navigator.push(
                 context,
@@ -564,6 +565,7 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
                   builder: (context) => CheckoutScreen(
                     title: widget.title,
                     basePrice: hargaTiket,
+                    categoryName: namaKategori,
                   ),
                 ),
               );
