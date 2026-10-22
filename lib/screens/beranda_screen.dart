@@ -7,14 +7,11 @@ import 'package:intl/intl.dart';
 
 import 'minigame_screen.dart';
 import 'detail_tiket.dart';
+import '../services/db_helper.dart'; // TAMBAHAN IMPORT
 
 /* ---------------- RESPONSIVE HELPER ---------------- */
 enum _ScreenSize { compact, medium, expanded }
 
-/// Satu tempat untuk semua ukuran yang bergantung pada lebar layar.
-/// compact  : < 600  (HP)
-/// medium   : 600-1023 (tablet / HP landscape)
-/// expanded : >= 1024 (desktop / web / tablet besar)
 class _Layout {
   final double width;
   const _Layout(this.width);
@@ -34,9 +31,7 @@ class _Layout {
     _ScreenSize.expanded => 1040,
   };
 
-  /// Lebar area konten yang benar-benar dipakai.
   double get contentWidth => width < contentMaxWidth ? width : contentMaxWidth;
-
   double get gutter => isCompact ? 16 : 24;
 
   double get carouselFraction => switch (size) {
@@ -52,13 +47,41 @@ class _Layout {
   };
 }
 
-class HomeScreen extends StatelessWidget {
+// ==========================================
+// UBAH JADI STATEFUL WIDGET
+// ==========================================
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String namaUser = 'Memuat...';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNamaUser();
+  }
+
+  Future<void> _loadNamaUser() async {
+    final email = await DBHelper().getSesi();
+    if (email != null) {
+      final user = await DBHelper().getUserByEmail(email);
+      if (user != null && mounted) {
+        setState(() {
+          // Ambil kata pertama saja untuk sapaan
+          String fullName = user['nama_lengkap'].toString();
+          namaUser = fullName.split(' ').first;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Batasi pembesaran font sistem supaya layout tidak pecah
-    // kalau pengguna memakai ukuran font yang sangat besar.
     return MediaQuery.withClampedTextScaling(
       minScaleFactor: 1.0,
       maxScaleFactor: 1.3,
@@ -70,12 +93,10 @@ class HomeScreen extends StatelessWidget {
               final layout = _Layout(constraints.maxWidth);
 
               return SingleChildScrollView(
-                // Ruang bawah supaya tidak ketutup bottom nav
                 padding: const EdgeInsets.only(bottom: 120),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Header full-width, isinya dibatasi mengikuti konten
                     _Header(
                       maxWidth: layout.contentMaxWidth,
                       gutter: layout.gutter,
@@ -100,7 +121,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  /// HP & tablet: satu kolom.
   Widget _buildStacked(_Layout layout) {
     final g = layout.gutter;
     return Column(
@@ -112,7 +132,8 @@ class HomeScreen extends StatelessWidget {
         ),
         Padding(
           padding: EdgeInsets.fromLTRB(g, 14, g, 0),
-          child: const _HelloCard(),
+          // KIRIM NAMA KE HELLO CARD
+          child: _HelloCard(nama: namaUser),
         ),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: g),
@@ -131,7 +152,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  /// Desktop / layar lebar: kartu sapaan & mini games bersebelahan.
   Widget _buildExpanded(_Layout layout) {
     final g = layout.gutter;
     return Column(
@@ -143,13 +163,14 @@ class HomeScreen extends StatelessWidget {
         ),
         Padding(
           padding: EdgeInsets.fromLTRB(g, 14, g, 0),
-          child: const IntrinsicHeight(
+          child: IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(child: _HelloCard()),
-                SizedBox(width: 16),
-                Expanded(child: _MiniGamesCard()),
+                // KIRIM NAMA KE HELLO CARD
+                Expanded(child: _HelloCard(nama: namaUser)),
+                const SizedBox(width: 16),
+                const Expanded(child: _MiniGamesCard()),
               ],
             ),
           ),
@@ -414,8 +435,6 @@ class _WorldClockStripState extends State<_WorldClockStrip> {
                     ? null
                     : const Border(left: BorderSide(color: Color(0xFFF0E8D8))),
               ),
-              // FittedBox: teks mengecil otomatis di layar sempit,
-              // jadi tidak pernah overflow.
               child: FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Column(
@@ -462,7 +481,8 @@ class _WorldClockStripState extends State<_WorldClockStrip> {
 
 /* ---------------- HELLO CARD ---------------- */
 class _HelloCard extends StatelessWidget {
-  const _HelloCard();
+  final String nama; // TAMBAHAN PARAMETER NAMA
+  const _HelloCard({required this.nama});
 
   @override
   Widget build(BuildContext context) {
@@ -523,9 +543,10 @@ class _HelloCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 2),
-              const Text(
-                'Raden Aryo 👋',
-                style: TextStyle(
+              // TAMPILKAN NAMA DINAMIS DI SINI
+              Text(
+                '$nama 👋',
+                style: const TextStyle(
                   fontSize: 22,
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
@@ -638,7 +659,6 @@ class _ShowCarousel extends StatelessWidget {
 
   const _ShowCarousel({required this.viewportFraction});
 
-  // Folder foto. Pastikan sudah didaftarkan di pubspec.yaml (flutter: assets:).
   static const String _dir = 'assets/';
 
   static const List<Map<String, String>> shows = [
@@ -672,11 +692,9 @@ class _ShowCarousel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Tinggi ikut membesar sedikit kalau font sistem diperbesar
     final textScale = MediaQuery.textScalerOf(context).scale(1);
     final height = 250 + (textScale - 1).clamp(0.0, 0.3) * 100;
 
-    // Izinkan geser carousel dengan mouse / trackpad (web & desktop)
     final behavior = ScrollConfiguration.of(context).copyWith(
       dragDevices: {
         PointerDeviceKind.touch,
@@ -720,7 +738,6 @@ class _ShowCarousel extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // FOTO: mengisi semua sisa tinggi kartu
                 Expanded(
                   child: Stack(
                     fit: StackFit.expand,
@@ -728,7 +745,6 @@ class _ShowCarousel extends StatelessWidget {
                       Image.asset(
                         show['image']!,
                         fit: BoxFit.cover,
-                        // File asli 2000px; decode lebih kecil biar hemat memori
                         cacheWidth: 800,
                         errorBuilder: (_, __, ___) => Container(
                           color: const Color(0xFFD9D9D9),
@@ -739,7 +755,6 @@ class _ShowCarousel extends StatelessWidget {
                           ),
                         ),
                       ),
-                      // Gradasi gelap di bawah supaya judul terbaca
                       const DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -770,7 +785,6 @@ class _ShowCarousel extends StatelessWidget {
                     ],
                   ),
                 ),
-                // INFO + TOMBOL: tinggi mengikuti isi, padding dirapatkan
                 Padding(
                   padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
                   child: Column(
@@ -927,7 +941,6 @@ class _PlaceCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Wrap: chip turun ke baris bawah kalau tidak muat
                 Wrap(
                   spacing: 8,
                   runSpacing: 6,

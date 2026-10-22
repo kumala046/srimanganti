@@ -26,7 +26,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late VideoPlayerController _videoController;
   bool _isVideoInitialized = false;
 
-  // VARIABEL STATISTIK DINAMIS
   int _pentasDitonton = 0;
   int _tiketSiapDigunakan = 0;
   int _levelGames = 1;
@@ -36,9 +35,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     _videoController = VideoPlayerController.asset('assets/video_kraton.mp4')
       ..initialize().then((_) {
-        setState(() {
-          _isVideoInitialized = true;
-        });
+        if (mounted) setState(() => _isVideoInitialized = true);
       }).catchError((error) {
         print("Video belum ditambahkan di folder assets.");
       });
@@ -46,7 +43,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadStatistik();
   }
 
-  // FUNGSI AMBIL STATISTIK DARI DATABASE & SHARED PREFERENCES
   Future<void> _loadStatistik() async {
     final prefs = await SharedPreferences.getInstance();
     int level = prefs.getInt('level_games') ?? 1;
@@ -74,7 +70,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       _levelGames = level;
       _tiketSiapDigunakan = tiketAktif;
-      _pentasDitonton = tiketSelesai; // Sementara: tiket selesai dianggap sudah ditonton
+      _pentasDitonton = tiketSelesai;
     });
   }
 
@@ -92,7 +88,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           SafeArea(
             child: Column(
               children: [
-                // HEADER
                 Container(
                   padding: const EdgeInsets.all(24),
                   color: const Color(0xFF0B3D2E),
@@ -118,7 +113,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: ListView(
                       padding: const EdgeInsets.all(24),
                       children: [
-                        // KARTU PROFIL
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(color: const Color(0xFFFFFBEB), borderRadius: BorderRadius.circular(24), border: Border.all(color: const Color(0xFFF0EAD6))),
@@ -138,7 +132,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               const SizedBox(height: 16),
                               const Divider(),
                               const SizedBox(height: 8),
-                              // STATISTIK DINAMIS
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                                 children: [
@@ -152,7 +145,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         const SizedBox(height: 24),
 
-                        // KARTU ANGGOTA KELOMPOK & VIDEO
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(color: const Color(0xFFF3E9D2), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFE6D5B8))),
@@ -229,7 +221,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         const SizedBox(height: 24),
 
-                        // KARTU REFLEKSI
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(color: const Color(0xFF0B3D2E), borderRadius: BorderRadius.circular(20)),
@@ -252,7 +243,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         const SizedBox(height: 24),
                         
-                        // PENGATURAN AKUN
                         const Text('PENGATURAN AKUN', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
                         const SizedBox(height: 12),
                         Container(
