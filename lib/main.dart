@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'screens/auth_screen.dart';
+import 'services/notification_service.dart'; // TAMBAHAN
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,6 +12,8 @@ Future<void> main() async {
     url: 'https://[URL_PROJECT_KAMU].supabase.co',
     anonKey: 'sb_publishable__oM_IvEUvWU2b_gDwHwtVA_GtZ_ZLAb',
   );
+
+  await NotificationService.init(); // TAMBAHAN
 
   runApp(const MyApp());
 }

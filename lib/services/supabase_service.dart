@@ -1,14 +1,12 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseService {
-  // Mendapatkan instance client Supabase
   final SupabaseClient _client = Supabase.instance.client;
 
   // ==========================================
   // FUNGSI UNTUK USER (AUTH & PROFIL)
   // ==========================================
 
-  // 1. Simpan User Baru saat Register
   Future<void> createUser({
     required String email,
     required String nama,
@@ -27,7 +25,6 @@ class SupabaseService {
     }
   }
 
-  // 2. Ambil Data User berdasarkan Email
   Future<Map<String, dynamic>?> getUserProfile(String email) async {
     final response = await _client
         .from('users')
@@ -41,7 +38,6 @@ class SupabaseService {
   // FUNGSI UNTUK PAGELARAN (EVENT)
   // ==========================================
 
-  // 3. Ambil Semua Pagelaran
   Future<List<Map<String, dynamic>>> getPagelaran() async {
     try {
       final response = await _client.from('pagelaran').select();
@@ -55,7 +51,6 @@ class SupabaseService {
   // FUNGSI UNTUK TIKET
   // ==========================================
 
-  // 4. Simpan Tiket Baru (Disesuaikan dengan checkout_screen)
   Future<void> createTiket({
     required String userEmail,
     required String judulPagelaran,
@@ -77,7 +72,6 @@ class SupabaseService {
     }
   }
 
-  // 5. Ambil Riwayat Tiket milik User
   Future<List<Map<String, dynamic>>> getHistoryTiket(String email) async {
     try {
       final response = await _client
@@ -88,6 +82,20 @@ class SupabaseService {
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
       throw Exception('Gagal memuat riwayat tiket: $e');
+    }
+  }
+
+  // ==========================================
+  // FUNGSI BARU: UPDATE STATUS TIKET (BATALKAN)
+  // ==========================================
+  Future<void> updateStatusTiket(int idTiket, String statusBaru) async {
+    try {
+      await _client
+          .from('tiket')
+          .update({'status': statusBaru})
+          .eq('id', idTiket);
+    } catch (e) {
+      throw Exception('Gagal update status tiket: $e');
     }
   }
 }
