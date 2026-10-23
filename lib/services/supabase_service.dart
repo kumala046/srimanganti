@@ -107,6 +107,17 @@ class SupabaseService {
     }
   }
 
+  Future<void> updateStatusTiket(int idTiket, String statusBaru) async {
+    try {
+      await _client
+          .from('tiket')
+          .update({'status': statusBaru})
+          .eq('id', idTiket);
+    } catch (e) {
+      throw Exception('Gagal update status tiket: $e');
+    }
+  }
+
   Future<void> createUlasan({
     required String userEmail,
     required String judulPagelaran,

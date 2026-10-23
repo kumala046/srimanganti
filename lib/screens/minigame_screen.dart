@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'dart:async';
 import 'dart:math';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MinigameScreen extends StatefulWidget {
   const MinigameScreen({Key? key}) : super(key: key);
@@ -33,11 +35,51 @@ class _MinigameScreenState extends State<MinigameScreen> {
   bool isGameOver = false;
   bool isLevelComplete = false;
   bool lockBoard = false;
+  
+  // State untuk Countdown
+  bool isCountdown = true;
+  int countdownValue = 3;
+  Timer? countdownTimer;
 
   @override
   void initState() {
     super.initState();
-    startLevel(0);
+    startCountdown(0);
+  }
+
+  // FUNGSI COUNTDOWN 3 DETIK
+  void startCountdown(int levelIndex) {
+    setState(() {
+      currentLevelIndex = levelIndex;
+      isCountdown = true;
+      countdownValue = 3;
+      isGameOver = false;
+      isLevelComplete = false;
+      firstCardIndex = null;
+      matchedPairs = 0;
+      lockBoard = false;
+      cardFlipped = [];
+      cardMatched = [];
+      currentCards = [];
+      timer?.cancel();
+    });
+
+    countdownTimer?.cancel();
+    countdownTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (countdownValue > 1) {
+        setState(() => countdownValue--);
+      } else {
+        t.cancel();
+        setState(() {
+          countdownValue = 0; // Tampilkan "MULAI"
+        });
+        Future.delayed(const Duration(milliseconds: 800), () {
+          if (!mounted) return;
+          setState(() => isCountdown = false);
+          startLevel(levelIndex);
+        });
+      }
+    });
   }
 
   void startLevel(int levelIndex) {
@@ -77,7 +119,7 @@ class _MinigameScreenState extends State<MinigameScreen> {
   }
 
   void onCardTap(int index) {
-    if (lockBoard || cardFlipped[index] || cardMatched[index]) return;
+    if (lockBoard || cardFlipped[index] || cardMatched[index] || isCountdown) return;
     setState(() => cardFlipped[index] = true);
     if (firstCardIndex == null) {
       firstCardIndex = index;
@@ -105,10 +147,15 @@ class _MinigameScreenState extends State<MinigameScreen> {
     }
   }
 
-  void checkWinCondition() {
+  void checkWinCondition() async {
     int totalPairs = levels[currentLevelIndex]['cards'] ~/ 2;
     if (matchedPairs == totalPairs) {
       timer?.cancel();
+      
+      // SIMPAN LEVEL KE SHARED PREFERENCES
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('level_games', currentLevelIndex + 1);
+
       if (currentLevelIndex < levels.length - 1) {
         setState(() => isLevelComplete = true);
       } else {
@@ -120,12 +167,13 @@ class _MinigameScreenState extends State<MinigameScreen> {
   @override
   void dispose() {
     timer?.cancel();
+    countdownTimer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    int numCards = levels[currentLevelIndex]['cards'];
+    int numCards = currentCards.isNotEmpty ? currentCards.length : levels[currentLevelIndex]['cards'];
     int crossAxisCount = currentLevelIndex == 2 ? 4 : 3;
 
     return Scaffold(
@@ -139,136 +187,165 @@ class _MinigameScreenState extends State<MinigameScreen> {
         ),
         title: const Text('Minigame', style: TextStyle(color: Color(0xFF0B3D2E), fontFamily: 'Serif', fontWeight: FontWeight.bold)),
       ),
-      body: Center( // Membuat konten ke tengah
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420), // Lebar maksimal
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                      decoration: BoxDecoration(color: const Color(0xFFF3E9D2), borderRadius: BorderRadius.circular(20)),
-                      child: Text('Level ${currentLevelIndex + 1}', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0B3D2E))),
-                    ),
-                    Text('Waktu: $timeLeft', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0B3D2E), fontSize: 16)),
-                  ],
-                ),
-              ),
-              
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: GridView.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: crossAxisCount,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 1.0,
-                    ),
-                    itemCount: numCards,
-                    itemBuilder: (context, index) {
-                      bool isFlipped = cardFlipped[index] || cardMatched[index];
-                      return GestureDetector(
-                        onTap: () => onCardTap(index),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          decoration: BoxDecoration(
-                            color: cardMatched[index] ? const Color(0xFFD4EDDA) : Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: cardMatched[index] ? const Color(0xFF155724) : const Color(0xFFE6D5B8),
-                              width: 2,
-                            ),
-                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5)],
-                          ),
-                          child: isFlipped 
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Image.asset(currentCards[index], fit: BoxFit.contain),
-                                  ),
-                                )
-                              : const Icon(Icons.question_mark, color: Color(0xFF0B3D2E), size: 30),
+      body: Stack(
+        children: [
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                          decoration: BoxDecoration(color: const Color(0xFFF3E9D2), borderRadius: BorderRadius.circular(20)),
+                          child: Text('Level ${currentLevelIndex + 1}', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0B3D2E))),
                         ),
-                      );
-                    },
+                        Text('Waktu: $timeLeft', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0B3D2E), fontSize: 16)),
+                      ],
+                    ),
                   ),
-                ),
-              ),
+                  
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: GridView.builder(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: crossAxisCount,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 1.0,
+                        ),
+                        itemCount: numCards,
+                        itemBuilder: (context, index) {
+                          if (currentCards.isEmpty) return const SizedBox();
+                          bool isFlipped = cardFlipped[index] || cardMatched[index];
+                          return GestureDetector(
+                            onTap: () => onCardTap(index),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              decoration: BoxDecoration(
+                                color: cardMatched[index] ? const Color(0xFFD4EDDA) : Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: cardMatched[index] ? const Color(0xFF155724) : const Color(0xFFE6D5B8),
+                                  width: 2,
+                                ),
+                                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5)],
+                              ),
+                              child: isFlipped 
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Image.asset(currentCards[index], fit: BoxFit.contain),
+                                      ),
+                                    )
+                                  : const Icon(Icons.question_mark, color: Color(0xFF0B3D2E), size: 30),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
 
-              if (isLevelComplete)
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () => startLevel(currentLevelIndex + 1),
-                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0B3D2E), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                      child: const Text('Lanjut ke Level Berikutnya'),
+                  if (isLevelComplete)
+                    Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: () => startCountdown(currentLevelIndex + 1),
+                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0B3D2E), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                          child: const Text('Lanjut ke Level Berikutnya'),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+
+          // OVERLAY COUNTDOWN (EFEK BLUR)
+          if (isCountdown)
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+              child: Container(
+                color: const Color(0xFF0B3D2E).withOpacity(0.4),
+                child: Center(
+                  child: Text(
+                    countdownValue > 0 ? '$countdownValue' : 'MULAI!',
+                    style: const TextStyle(
+                      fontSize: 80,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontFamily: 'Serif',
                     ),
                   ),
                 ),
-            ],
-          ),
-        ),
+              ),
+            ),
+
+          // OVERLAY KEMENANGAN
+          if (isGameOver)
+            _buildGameOverDialog(),
+        ],
       ),
-      
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: isGameOver ? _buildGameOverDialog() : null,
     );
   }
 
   Widget _buildGameOverDialog() {
     bool isAllLevelsWon = matchedPairs == levels[currentLevelIndex]['cards'] ~/ 2;
     return Container(
-      margin: const EdgeInsets.all(24),
+      color: const Color(0xFF0B3D2E), // Full hijau
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 20)]),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          const Text('🏆', style: TextStyle(fontSize: 80)),
+          const SizedBox(height: 20),
           Text(
-            isAllLevelsWon ? 'Selamat!' : 'Waktu Habis!',
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF0B3D2E)),
+            isAllLevelsWon ? 'Luar Biasa!' : 'Waktu Habis!',
+            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFFE6D5B8), fontFamily: 'Serif'),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            isAllLevelsWon 
+                ? 'Selamat! Kamu telah menyelesaikan seluruh tantangan Memory Card Budaya Srimanganti.' 
+                : 'Kamu gagal di level ini. Ayo coba lagi!',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.white70, fontSize: 16),
+          ),
+          const SizedBox(height: 40),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
+              onPressed: () {
+                if (isAllLevelsWon) {
+                  startCountdown(0);
+                } else {
+                  startCountdown(currentLevelIndex);
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE6D5B8), foregroundColor: const Color(0xFF0B3D2E), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24))),
+              child: Text(isAllLevelsWon ? 'Main Lagi' : 'Ulangi Level Ini', style: const TextStyle(fontWeight: FontWeight.bold)),
+            ),
           ),
           const SizedBox(height: 12),
-          Text(
-            isAllLevelsWon ? 'Kamu berhasil menyelesaikan semua level!' : 'Kamu gagal di level ini. Ayo coba lagi!',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.grey),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: const BorderSide(color: Colors.white54), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24))),
+              child: const Text('Kembali ke Beranda'),
+            ),
           ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (isAllLevelsWon) {
-                      startLevel(0);
-                    } else {
-                      startLevel(currentLevelIndex);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0B3D2E), foregroundColor: Colors.white),
-                  child: Text(isAllLevelsWon ? 'Main Lagi' : 'Ulangi Level Ini'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE6D5B8), foregroundColor: const Color(0xFF0B3D2E)),
-                  child: const Text('Kembali'),
-                ),
-              ),
-            ],
-          )
         ],
       ),
     );

@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'dart:io';
 
 import 'package:video_player/video_player.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -38,6 +39,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   final ImagePicker _picker = ImagePicker();
 
+  int _pentasDitonton = 0;
+  int _tiketSiapDigunakan = 0;
+  int _levelGames = 1;
+
   @override
   void initState() {
     super.initState();
@@ -46,9 +51,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _videoController = VideoPlayerController.asset('assets/video_kraton.mp4')
       ..initialize()
           .then((_) {
-            setState(() {
-              _isVideoInitialized = true;
-            });
+            if (mounted) setState(() => _isVideoInitialized = true);
           })
           .catchError((error) {
             print("Video belum ditambahkan di folder assets.");
@@ -78,6 +81,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
       }
     }
+    _loadStatistik();
+  }
+
+  Future<void> _loadStatistik() async {
+    final prefs = await SharedPreferences.getInstance();
+    int level = prefs.getInt('level_games') ?? 1;
+
+    int tiketAktif = 0;
+    int tiketSelesai = 0;
+
+    try {
+      final email = await DBHelper().getSesi();
+      if (email != null && email.isNotEmpty) {
+        final data = await SupabaseService().getHistoryTiket(email);
+        for (var item in data) {
+          if (item['status'] == 'Aktif') {
+            tiketAktif++;
+          } else if (item['status'] == 'Selesai') {
+            tiketSelesai++;
+          }
+        }
+      }
+    } catch (e) {
+      print("Gagal load statistik: $e");
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _levelGames = level;
+      _tiketSiapDigunakan = tiketAktif;
+      _pentasDitonton = tiketSelesai;
+    });
   }
 
   Future<void> _gantiFoto() async {
@@ -277,194 +312,185 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.all(24),
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFFBEB),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: const Color(0xFFF0EAD6)),
-                        ),
-                        child: Column(
-                          children: [
-                            Stack(
-                              children: [
-                                ClipOval(
-                                  child: fotoProfilPath != null
-                                      ? Image.file(
-                                          File(fotoProfilPath!),
-                                          width: 90,
-                                          height: 90,
-                                          fit: BoxFit.cover,
-                                        )
-                                      : Image.asset(
-                                          'assets/profil.jpg',
-                                          width: 90,
-                                          height: 90,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (c, e, s) => const Icon(
-                                            Icons.person,
-                                            size: 90,
+                  child: RefreshIndicator(
+                    onRefresh: _loadUserData,
+                    color: const Color(0xFF0B3D2E),
+                    child: ListView(
+                      padding: const EdgeInsets.all(24),
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFFBEB),
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(color: const Color(0xFFF0EAD6)),
+                          ),
+                          child: Column(
+                            children: [
+                              Stack(
+                                children: [
+                                  ClipOval(
+                                    child: fotoProfilPath != null
+                                        ? Image.file(
+                                            File(fotoProfilPath!),
+                                            width: 90,
+                                            height: 90,
+                                            fit: BoxFit.cover,
+                                          )
+                                        : Image.asset(
+                                            'assets/profil.jpg',
+                                            width: 90,
+                                            height: 90,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (c, e, s) =>
+                                                const Icon(
+                                                  Icons.person,
+                                                  size: 90,
+                                                ),
+                                          ),
+                                  ),
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: GestureDetector(
+                                      onTap: _gantiFoto,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF1A3C34),
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: Colors.white,
+                                            width: 2,
                                           ),
                                         ),
-                                ),
-                                Positioned(
-                                  bottom: 0,
-                                  right: 0,
-                                  child: GestureDetector(
-                                    onTap: _gantiFoto,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(6),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF1A3C34),
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
+                                        child: const Icon(
+                                          Icons.camera_alt,
                                           color: Colors.white,
-                                          width: 2,
+                                          size: 14,
                                         ),
-                                      ),
-                                      child: const Icon(
-                                        Icons.camera_alt,
-                                        color: Colors.white,
-                                        size: 14,
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              namaLengkap,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF0B3D2E),
-                                fontFamily: 'Serif',
+                                ],
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFE6D5B8),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                emailUser,
+                              const SizedBox(height: 12),
+                              Text(
+                                namaLengkap,
+                                textAlign: TextAlign.center,
                                 style: const TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 22,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF153D1F),
+                                  color: Color(0xFF0B3D2E),
+                                  fontFamily: 'Serif',
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 16),
-                            const Divider(),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                _buildStat('4', 'Pentas\nDitonton'),
-                                _buildStat('2', 'Tiket\nSiap digunakan'),
-                                _buildStat(
-                                  '3',
-                                  'Level\nGames',
-                                  color: const Color(0xFFD35400),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 6,
                                 ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF3E9D2),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: const Color(0xFFE6D5B8)),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: const [
-                                Icon(
-                                  Icons.groups,
-                                  color: Color(0xFF0B3D2E),
-                                  size: 18,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE6D5B8),
+                                  borderRadius: BorderRadius.circular(20),
                                 ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'ANGGOTA KELOMPOK',
-                                  style: TextStyle(
-                                    color: Color(0xFF0B3D2E),
-                                    fontSize: 12,
+                                child: Text(
+                                  emailUser,
+                                  style: const TextStyle(
+                                    fontSize: 11,
                                     fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.5,
+                                    color: Color(0xFF153D1F),
                                   ),
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            _buildMemberCard(
-                              'Alvina Kumala Budiastuti',
-                              '124240046',
-                            ),
-                            const SizedBox(height: 8),
-                            _buildMemberCard('Dhiara Ayu Nasta', '124240185'),
-                            const SizedBox(height: 8),
-                            _buildMemberCard(
-                              'Nurisshifa Alfiyana',
-                              '124240186',
-                            ),
-                            const SizedBox(height: 20),
-                            const Text(
-                              'Dokumentasi Kunjungan',
-                              style: TextStyle(
-                                color: Color(0xFF0B3D2E),
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: AspectRatio(
-                                aspectRatio: 16 / 9,
-                                child: _isVideoInitialized
-                                    ? Stack(
-                                        alignment: Alignment.bottomRight,
-                                        children: [
-                                          GestureDetector(
-                                            onTap: () {
-                                              setState(() {
-                                                _videoController.value.isPlaying
-                                                    ? _videoController.pause()
-                                                    : _videoController.play();
-                                              });
-                                            },
-                                            child: Container(
-                                              color: Colors.black,
-                                              child: VideoPlayer(
-                                                _videoController,
-                                              ),
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: FloatingActionButton.small(
-                                              backgroundColor: Colors.white
-                                                  .withOpacity(0.8),
-                                              elevation: 0,
-                                              onPressed: () {
+                              const SizedBox(height: 16),
+                              const Divider(),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceAround,
+                                children: [
+                                  _buildStat(
+                                    '$_pentasDitonton',
+                                    'Pentas\nDitonton',
+                                  ),
+                                  _buildStat(
+                                    '$_tiketSiapDigunakan',
+                                    'Tiket\nSiap digunakan',
+                                  ),
+                                  _buildStat(
+                                    '$_levelGames',
+                                    'Level\nGames',
+                                    color: const Color(0xFFD35400),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF3E9D2),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: const Color(0xFFE6D5B8)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: const [
+                                  Icon(
+                                    Icons.groups,
+                                    color: Color(0xFF0B3D2E),
+                                    size: 18,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'ANGGOTA KELOMPOK',
+                                    style: TextStyle(
+                                      color: Color(0xFF0B3D2E),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              _buildMemberCard(
+                                'Alvina Kumala Budiastuti',
+                                '124240046',
+                              ),
+                              const SizedBox(height: 8),
+                              _buildMemberCard('Dhiara Ayu Nasta', '124240185'),
+                              const SizedBox(height: 8),
+                              _buildMemberCard(
+                                'Nurisshifa Alfiyana',
+                                '124240186',
+                              ),
+                              const SizedBox(height: 20),
+                              const Text(
+                                'Dokumentasi Kunjungan',
+                                style: TextStyle(
+                                  color: Color(0xFF0B3D2E),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: AspectRatio(
+                                  aspectRatio: 16 / 9,
+                                  child: _isVideoInitialized
+                                      ? Stack(
+                                          alignment: Alignment.bottomRight,
+                                          children: [
+                                            GestureDetector(
+                                              onTap: () {
                                                 setState(() {
                                                   _videoController
                                                           .value
@@ -473,185 +499,216 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                       : _videoController.play();
                                                 });
                                               },
-                                              child: Icon(
-                                                _videoController.value.isPlaying
-                                                    ? Icons.pause
-                                                    : Icons.play_arrow,
-                                                color: const Color(0xFF0B3D2E),
+                                              child: Container(
+                                                color: Colors.black,
+                                                child: VideoPlayer(
+                                                  _videoController,
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                        ],
-                                      )
-                                    : Container(
-                                        color: Colors.grey[300],
-                                        child: const Center(
-                                          child: Text(
-                                            'Video belum tersedia / Loading...',
-                                            style: TextStyle(fontSize: 10),
+                                            Padding(
+                                              padding: const EdgeInsets.all(
+                                                8.0,
+                                              ),
+                                              child: FloatingActionButton.small(
+                                                backgroundColor: Colors.white
+                                                    .withOpacity(0.8),
+                                                elevation: 0,
+                                                onPressed: () {
+                                                  setState(() {
+                                                    _videoController
+                                                            .value
+                                                            .isPlaying
+                                                        ? _videoController
+                                                              .pause()
+                                                        : _videoController
+                                                              .play();
+                                                  });
+                                                },
+                                                child: Icon(
+                                                  _videoController
+                                                          .value
+                                                          .isPlaying
+                                                      ? Icons.pause
+                                                      : Icons.play_arrow,
+                                                  color: const Color(
+                                                    0xFF0B3D2E,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      : Container(
+                                          color: Colors.grey[300],
+                                          child: const Center(
+                                            child: Text(
+                                              'Video belum tersedia / Loading...',
+                                              style: TextStyle(fontSize: 10),
+                                            ),
                                           ),
                                         ),
-                                      ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0B3D2E),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: const [
-                                Icon(
-                                  Icons.star,
-                                  color: Color(0xFFE6D5B8),
-                                  size: 14,
                                 ),
-                                SizedBox(width: 6),
-                                Text(
-                                  'CATATAN REFLEKSI PROYEK AKHIR',
-                                  style: TextStyle(
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0B3D2E),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: const [
+                                  Icon(
+                                    Icons.star,
                                     color: Color(0xFFE6D5B8),
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
+                                    size: 14,
+                                  ),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'CATATAN REFLEKSI PROYEK AKHIR',
+                                    style: TextStyle(
+                                      color: Color(0xFFE6D5B8),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              const Text(
+                                'Kesan & Pesan Kuliah Pemrograman Aplikasi Mobile (PAM)',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                '"Mempelajari pemrograman Flutter membuka wawasan saya tentang cara membuat aplikasi mobile yang bermanfaat..."',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        const Text(
+                          'PENGATURAN AKUN',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF3E9D2),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFFE6D5B8)),
+                          ),
+                          child: Column(
+                            children: [
+                              ListTile(
+                                leading: const Icon(
+                                  Icons.edit,
+                                  color: Color(0xFF0B3D2E),
+                                ),
+                                title: const Text(
+                                  'Ubah Data Identitas Diri',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'Kesan & Pesan Kuliah Pemrograman Aplikasi Mobile (PAM)',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
+                                subtitle: const Text(
+                                  'Nama Pribadi, Alamat, Email',
+                                  style: TextStyle(fontSize: 11),
+                                ),
+                                onTap: () => setState(() {
+                                  isBlurred = true;
+                                  activeModal = 'identity';
+                                }),
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              '"Mempelajari pemrograman Flutter membuka wawasan saya tentang cara membuat aplikasi mobile yang bermanfaat..."',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        'PENGATURAN AKUN',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF3E9D2),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFE6D5B8)),
-                        ),
-                        child: Column(
-                          children: [
-                            ListTile(
-                              leading: const Icon(
-                                Icons.edit,
-                                color: Color(0xFF0B3D2E),
-                              ),
-                              title: const Text(
-                                'Ubah Data Identitas Diri',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                              const Divider(height: 1),
+                              ListTile(
+                                leading: const Icon(
+                                  Icons.fingerprint,
+                                  color: Color(0xFF0B3D2E),
+                                ),
+                                title: const Text(
+                                  'Verifikasi Biometrik',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                subtitle: const Text(
+                                  'Pengenalan Wajah/Sidik Jari',
+                                  style: TextStyle(fontSize: 11),
+                                ),
+                                trailing: Switch(
+                                  value: true,
+                                  onChanged: (v) {},
+                                  activeColor: const Color(0xFF0B3D2E),
                                 ),
                               ),
-                              subtitle: const Text(
-                                'Nama Pribadi, Alamat, Email',
-                                style: TextStyle(fontSize: 11),
-                              ),
-                              onTap: () => setState(() {
-                                isBlurred = true;
-                                activeModal = 'identity';
-                              }),
-                            ),
-                            const Divider(height: 1),
-                            ListTile(
-                              leading: const Icon(
-                                Icons.fingerprint,
-                                color: Color(0xFF0B3D2E),
-                              ),
-                              title: const Text(
-                                'Verifikasi Biometrik',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                              const Divider(height: 1),
+                              ListTile(
+                                leading: const Icon(
+                                  Icons.lock,
+                                  color: Color(0xFF0B3D2E),
                                 ),
-                              ),
-                              subtitle: const Text(
-                                'Pengenalan Wajah/Sidik Jari',
-                                style: TextStyle(fontSize: 11),
-                              ),
-                              trailing: Switch(
-                                value: true,
-                                onChanged: (v) {},
-                                activeColor: const Color(0xFF0B3D2E),
-                              ),
-                            ),
-                            const Divider(height: 1),
-                            ListTile(
-                              leading: const Icon(
-                                Icons.lock,
-                                color: Color(0xFF0B3D2E),
-                              ),
-                              title: const Text(
-                                'Kata Sandi',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                                title: const Text(
+                                  'Kata Sandi',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
+                                onTap: () => setState(() {
+                                  isBlurred = true;
+                                  activeModal = 'password';
+                                }),
                               ),
-                              onTap: () => setState(() {
-                                isBlurred = true;
-                                activeModal = 'password';
-                              }),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        onPressed: () => setState(() {
-                          isBlurred = true;
-                          activeModal = 'logout';
-                        }),
-                        icon: const Icon(Icons.logout),
-                        label: const Text('Keluar Akun (Logout)'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFADBD8),
-                          foregroundColor: const Color(0xFFC0392B),
-                          minimumSize: const Size(double.infinity, 50),
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          onPressed: () => setState(() {
+                            isBlurred = true;
+                            activeModal = 'logout';
+                          }),
+                          icon: const Icon(Icons.logout),
+                          label: const Text('Keluar Akun (Logout)'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFADBD8),
+                            foregroundColor: const Color(0xFFC0392B),
+                            minimumSize: const Size(double.infinity, 50),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      const Center(
-                        child: Text(
-                          'Srimanganti Mobile v. 1.0\n© 2026 Hak Cipta Dilindungi',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 10, color: Colors.grey),
+                        const SizedBox(height: 24),
+                        const Center(
+                          child: Text(
+                            'Srimanganti Mobile v. 1.0\n© 2026 Hak Cipta Dilindungi',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 10, color: Colors.grey),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -807,7 +864,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          _buildTextField('Nama Lengkap', nameController),
+          _buildTextField('Nama Panggilan', nameController),
           _buildTextField('Alamat Email', emailController, readOnly: true),
           _buildTextField('Nomor WhatsApp', waController),
           const SizedBox(height: 12),

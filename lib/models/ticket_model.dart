@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class TicketModel {
+  final int id; // TAMBAHAN
   final String location;
   final String status;
   final bool isCompleted;
@@ -12,6 +13,7 @@ class TicketModel {
   final Color iconBgColor;
 
   TicketModel({
+    required this.id, // TAMBAHAN
     required this.location,
     required this.status,
     required this.isCompleted,
