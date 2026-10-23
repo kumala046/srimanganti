@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # tiket_srimanganti
 
 A new Flutter project.
@@ -15,3 +16,7 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+=======
+# srimanganti
+Repository ini digunakan sebagai sarana integrasi code dalam pengerjaan Tugas Akhir Mobile
+>>>>>>> 4026542dc1ff3c110929e9c381267e4b793a997d
