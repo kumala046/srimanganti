@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:ui' show PointerDeviceKind;
-<<<<<<< HEAD
 
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -9,21 +8,8 @@ import 'package:intl/intl.dart';
 import 'minigame_screen.dart';
 import 'detail_tiket.dart';
 import '../services/db_helper.dart';
-import '../services/supabase_service.dart'; // TAMBAHKAN IMPORT INI
+import '../services/supabase_service.dart'; 
 import 'package:url_launcher/url_launcher.dart';
-
-/* ---------------- RESPONSIVE HELPER ---------------- */
-=======
-import 'package:flutter/material.dart';
-import 'package:carousel_slider/carousel_slider.dart';
-import 'package:intl/intl.dart';
-import 'minigame_screen.dart';
-import 'detail_tiket.dart';
-import '../services/db_helper.dart';
-
-import 'package:url_launcher/url_launcher.dart';
-
->>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
 enum _ScreenSize { compact, medium, expanded }
 
 class _Layout {
@@ -83,7 +69,35 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadNamaUser();
   }
 
-<<<<<<< HEAD
+  Future<void> _loadNamaUser() async {
+    final email = await DBHelper().getSesi();
+    if (email != null && email.isNotEmpty) {
+      try {
+        final user = await SupabaseService().getUserProfile(email);
+        if (user != null && mounted) {
+          setState(() {
+            String fullName = user['nama_lengkap'].toString();
+            namaUser = fullName.split(' ').first;
+          });
+        } else {
+          _loadNamaFromLocal(email);
+        }
+      } catch (e) {
+        _loadNamaFromLocal(email);
+      }
+    }
+  }
+
+  Future<void> _loadNamaFromLocal(String email) async {
+    final user = await DBHelper().getUserByEmail(email);
+    if (user != null && mounted) {
+      setState(() {
+        String fullName = user['nama_lengkap'].toString();
+        namaUser = fullName.split(' ').first;
+      });
+    }
+  }
+  <<<<<<< HEAD
   // ==========================================
   // PERBAIKAN: AMBIL NAMA DARI SUPABASE DULU
   // ==========================================

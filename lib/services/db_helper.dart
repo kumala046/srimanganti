@@ -18,8 +18,7 @@ class DBHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
-<<<<<<< HEAD
-    // Versi 4: Paksa hapus database lama agar bersih total
+    // Versi 4: Paksa hapus database lama agar bersih total jika ada update
     return await openDatabase(
       path,
       version: 4, 
@@ -29,24 +28,6 @@ class DBHelper {
         await db.execute('DROP TABLE IF EXISTS sesi');
         await db.execute('DROP TABLE IF EXISTS pagelaran_cache');
         await _createDB(db, newVersion);
-=======
-    return await openDatabase(
-      path,
-      version: 2,
-      onCreate: _createDB,
-      onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 2) {
-          await db.execute('''
-            CREATE TABLE users (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              email TEXT UNIQUE,
-              password TEXT,
-              nama_lengkap TEXT,
-              no_whatsapp TEXT
-            )
-          ''');
-        }
->>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
       },
     );
   }
@@ -82,11 +63,7 @@ class DBHelper {
   }
 
   // ==========================================
-<<<<<<< HEAD
   // FUNGSI SESI
-=======
-  // FUNGSI UNTUK SESI LOGIN
->>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
   // ==========================================
   Future<void> simpanSesi(String email) async {
     final db = await database;
@@ -109,24 +86,7 @@ class DBHelper {
   }
 
   // ==========================================
-<<<<<<< HEAD
   // FUNGSI USER
-=======
-  // FUNGSI UNTUK VALIDASI LOGIN
-  // ==========================================
-  Future<bool> cekLoginLokal(String email, String password) async {
-    final db = await database;
-    final result = await db.query(
-      'users',
-      where: 'email = ? AND password = ?',
-      whereArgs: [email, password],
-    );
-    return result.isNotEmpty;
-  }
-
-  // ==========================================
-  // FUNGSI AMBIL DATA USER (BARU)
->>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
   // ==========================================
   Future<Map<String, dynamic>?> getUserByEmail(String email) async {
     final db = await database;
@@ -140,11 +100,9 @@ class DBHelper {
     }
     return null;
   }
-<<<<<<< HEAD
-=======
 
   // ==========================================
-  // FUNGSI UNTUK CACHE PAGELARAN
+  // FUNGSI CACHE PAGELARAN (OPSIONAL)
   // ==========================================
   Future<void> simpanCachePagelaran(List<Map<String, dynamic>> data) async {
     final db = await database;
@@ -167,5 +125,4 @@ class DBHelper {
     final db = await database;
     return await db.query('pagelaran_cache');
   }
->>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
 }
