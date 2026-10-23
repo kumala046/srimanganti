@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'screens/auth_screen.dart';
-import 'services/notification_service.dart'; // TAMBAHAN
+import 'services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // GANTI URL DAN KEY DI BAWAH INI DENGAN PUNYAMU
   await Supabase.initialize(
     url: 'https://ekyzvgrqmcthugakpvgy.supabase.co',
     anonKey: 'sb_publishable__oM_IvEUvWU2b_gDwHwtVA_GtZ_ZLAb',
