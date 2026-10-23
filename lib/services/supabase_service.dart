@@ -1,11 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
 
 class SupabaseService {
   final SupabaseClient _client = Supabase.instance.client;
-
-  // ==========================================
-  // FUNGSI UNTUK USER (AUTH & PROFIL)
-  // ==========================================
 
   Future<void> createUser({
     required String email,
@@ -26,47 +23,47 @@ class SupabaseService {
   }
 
   Future<Map<String, dynamic>?> getUserProfile(String email) async {
-    final response = await _client
-        .from('users')
-        .select()
-        .eq('email', email)
-        .maybeSingle();
-    return response;
+    try {
+      final response = await _client
+          .from('users')
+          .select()
+          .eq('email', email)
+          .maybeSingle();
+      return response;
+    } catch (e) {
+      throw Exception('Gagal mengambil profil: $e');
+    }
   }
 
-  // FUNGSI BARU: Update Profil ke Supabase
   Future<void> updateProfile({
     required String email,
     required String nama,
     required String noWa,
   }) async {
     try {
-      await _client.from('users').update({
-        'nama_lengkap': nama,
-        'no_whatsapp': noWa,
-      }).eq('email', email);
+      await _client
+          .from('users')
+          .update({'nama_lengkap': nama, 'no_whatsapp': noWa})
+          .eq('email', email);
     } catch (e) {
       throw Exception('Gagal update profil online: $e');
     }
   }
 
-  // FUNGSI BARU: Update Password ke Supabase
   Future<void> updatePassword({
     required String email,
     required String newPassword,
   }) async {
     try {
-      await _client.from('users').update({
-        'password': newPassword, // Pastikan kolom password ada di tabel users Supabase
-      }).eq('email', email);
+      await _client
+          .from('users')
+          .update({'password': newPassword})
+          .eq('email', email);
     } catch (e) {
       throw Exception('Gagal update password online: $e');
     }
   }
 
-  // ==========================================
-  // FUNGSI UNTUK PAGELARAN (EVENT)
-  // ==========================================
   Future<List<Map<String, dynamic>>> getPagelaran() async {
     try {
       final response = await _client.from('pagelaran').select();
@@ -76,9 +73,6 @@ class SupabaseService {
     }
   }
 
-  // ==========================================
-  // FUNGSI UNTUK TIKET
-  // ==========================================
   Future<void> createTiket({
     required String userEmail,
     required String judulPagelaran,
@@ -89,7 +83,7 @@ class SupabaseService {
     try {
       await _client.from('tiket').insert({
         'user_email': userEmail,
-        'judul_pagelaran': judulPagelaran, 
+        'judul_pagelaran': judulPagelaran,
         'kode_booking': kodeBooking,
         'jumlah_tiket': jumlahTiket,
         'total_harga': totalHarga,
@@ -110,6 +104,67 @@ class SupabaseService {
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
       throw Exception('Gagal memuat riwayat tiket: $e');
+    }
+  }
+
+  Future<void> createUlasan({
+    required String userEmail,
+    required String judulPagelaran,
+    required int rating,
+    required String teksUlasan,
+    required List<String> tags,
+  }) async {
+    try {
+      await _client.from('ulasan').insert({
+        'user_email': userEmail,
+        'judul_pagelaran': judulPagelaran,
+        'rating': rating,
+        'teks_ulasan': teksUlasan,
+        'tags': tags.join(', '),
+      });
+    } catch (e) {
+      throw Exception('Gagal menyimpan ulasan: $e');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getUlasan(String judulPagelaran) async {
+    try {
+      final response = await _client
+          .from('ulasan')
+          .select()
+          .eq('judul_pagelaran', judulPagelaran)
+          .order('created_at', ascending: false);
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      throw Exception('Gagal memuat ulasan: $e');
+    }
+  }
+
+  Future<String> generateRingkasanAI(String judulPagelaran) async {
+    try {
+      final ulasanData = await getUlasan(judulPagelaran);
+
+      if (ulasanData.isEmpty) {
+        return "Belum ada ulasan untuk pagelaran ini.";
+      }
+
+      String semuaUlasan = ulasanData
+          .map((u) => "- ${u['teks_ulasan']}")
+          .join("\n");
+
+      final model = GenerativeModel(
+        model: 'gemini-1.5-flash',
+        apiKey: 'AQ.Ab8RN6JcgFFem00dYpG88j8RzNnve-UMHzGNzznLYGK7SCizig',
+      );
+
+      final prompt =
+          'Berikan ringkasan singkat (maksimal 3 kalimat) dalam bahasa Indonesia yang ramah dan menarik dari ulasan penonton pagelaran "$judulPagelaran" berikut ini:\n\n$semuaUlasan';
+
+      final response = await model.generateContent([Content.text(prompt)]);
+
+      return response.text ?? "Gagal membuat ringkasan.";
+    } catch (e) {
+      return "Terjadi kesalahan saat menghubungi AI: $e";
     }
   }
 }

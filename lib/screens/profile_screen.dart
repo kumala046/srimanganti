@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+
 import 'dart:ui';
 import 'dart:io';
+
 import 'package:video_player/video_player.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../services/db_helper.dart';
-import '../services/supabase_service.dart'; // TAMBAHKAN IMPORT INI
+import '../services/supabase_service.dart';
 import 'auth_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -23,7 +25,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String namaLengkap = 'Memuat...';
   String emailUser = 'Memuat...';
   String waUser = 'Memuat...';
-  String? fotoProfilPath; 
+  String? fotoProfilPath;
 
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
@@ -40,15 +42,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _loadUserData();
-    
+
     _videoController = VideoPlayerController.asset('assets/video_kraton.mp4')
-      ..initialize().then((_) {
-        setState(() {
-          _isVideoInitialized = true;
-        });
-      }).catchError((error) {
-        print("Video belum ditambahkan di folder assets.");
-      });
+      ..initialize()
+          .then((_) {
+            setState(() {
+              _isVideoInitialized = true;
+            });
+          })
+          .catchError((error) {
+            print("Video belum ditambahkan di folder assets.");
+          });
   }
 
   Future<void> _loadUserData() async {
@@ -58,12 +62,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (user != null && mounted) {
         final directory = await getApplicationDocumentsDirectory();
         final file = File('${directory.path}/profile_$email.jpg');
-        
+
         setState(() {
           namaLengkap = user['nama_lengkap'] ?? 'User';
           emailUser = user['email'] ?? '-';
           waUser = user['no_whatsapp'] ?? '-';
-          
+
           nameController.text = namaLengkap;
           emailController.text = emailUser;
           waController.text = waUser;
@@ -78,49 +82,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _gantiFoto() async {
     try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 50,
+      );
       if (image != null) {
         final directory = await getApplicationDocumentsDirectory();
         final email = await DBHelper().getSesi();
         final fileName = 'profile_$email.jpg';
-        final savedImage = await File(image.path).copy('${directory.path}/$fileName');
+        final savedImage = await File(image.path)
+            .copy('${directory.path}/$fileName');
 
         setState(() {
           fotoProfilPath = savedImage.path;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Foto profil berhasil diubah!'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Foto profil berhasil diubah!'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal mengambil foto: $e'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text('Gagal mengambil foto: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
 
-  // ==========================================
-  // UPDATE: SIMPAN DATA DIRI (LOKAL & ONLINE)
-  // ==========================================
   Future<void> _simpanIdentitas() async {
-    setState(() => isBlurred = false); // Tutup modal dulu
-    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+    setState(() => isBlurred = false);
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
 
     try {
-      // 1. Simpan ke SQLite (Lokal)
       final db = await DBHelper().database;
       await db.update(
         'users',
-        {
-          'nama_lengkap': nameController.text,
-          'no_whatsapp': waController.text,
-        },
+        {'nama_lengkap': nameController.text, 'no_whatsapp': waController.text},
         where: 'email = ?',
         whereArgs: [emailUser],
       );
 
-      // 2. Simpan ke Supabase (Online)
       await SupabaseService().updateProfile(
         email: emailUser,
         nama: nameController.text,
@@ -133,30 +143,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
 
       if (!mounted) return;
-      Navigator.pop(context); // Tutup loading
+      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Data diri berhasil diperbarui di Lokal & Online!'), backgroundColor: Colors.green),
+        const SnackBar(
+          content: Text('Data diri berhasil diperbarui di Lokal & Online!'),
+          backgroundColor: Colors.green,
+        ),
       );
     } catch (e) {
       if (!mounted) return;
-      Navigator.pop(context); // Tutup loading
+      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal update: $e'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text('Gagal update: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
 
-  // ==========================================
-  // UPDATE: GANTI PASSWORD (LOKAL & ONLINE)
-  // ==========================================
   Future<void> _simpanPassword() async {
-    setState(() => isBlurred = false); // Tutup modal dulu
-    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+    setState(() => isBlurred = false);
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
 
     try {
       final db = await DBHelper().database;
-      
-      // 1. Cek password lama di SQLite
       final result = await db.query(
         'users',
         where: 'email = ? AND password = ?',
@@ -165,14 +180,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (result.isEmpty) {
         if (!mounted) return;
-        Navigator.pop(context); // Tutup loading
+        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Kata sandi lama salah!'), backgroundColor: Colors.red),
+          const SnackBar(
+            content: Text('Kata sandi lama salah!'),
+            backgroundColor: Colors.red,
+          ),
         );
         return;
       }
 
-      // 2. Update password di SQLite
       await db.update(
         'users',
         {'password': newPassController.text},
@@ -180,7 +197,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         whereArgs: [emailUser],
       );
 
-      // 3. Update password di Supabase
       await SupabaseService().updatePassword(
         email: emailUser,
         newPassword: newPassController.text,
@@ -190,15 +206,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
       newPassController.clear();
 
       if (!mounted) return;
-      Navigator.pop(context); // Tutup loading
+      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kata sandi berhasil diubah!'), backgroundColor: Colors.green),
+        const SnackBar(
+          content: Text('Kata sandi berhasil diubah!'),
+          backgroundColor: Colors.green,
+        ),
       );
     } catch (e) {
       if (!mounted) return;
-      Navigator.pop(context); // Tutup loading
+      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal update password: $e'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text('Gagal update password: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -222,35 +244,71 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   color: const Color(0xFF0B3D2E),
                   child: Row(
                     children: [
-                      Image.asset('assets/logo.png', width: 40, height: 40, errorBuilder: (c, e, s) => const Icon(Icons.image, color: Colors.white)),
+                      Image.asset(
+                        'assets/logo.png',
+                        width: 40,
+                        height: 40,
+                        errorBuilder: (c, e, s) =>
+                            const Icon(Icons.image, color: Colors.white),
+                      ),
                       const SizedBox(width: 12),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: const [
-                          Text('KERATON NGAYOGYAKARTA', style: TextStyle(color: Color(0xFFE6D5B8), fontSize: 10, letterSpacing: 1)),
-                          Text('Profil Saya', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                          Text(
+                            'KERATON NGAYOGYAKARTA',
+                            style: TextStyle(
+                              color: Color(0xFFE6D5B8),
+                              fontSize: 10,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                          Text(
+                            'Profil Saya',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ],
                       ),
                     ],
                   ),
                 ),
-
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.all(24),
                     children: [
-                      // KARTU PROFIL
                       Container(
                         padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(color: const Color(0xFFFFFBEB), borderRadius: BorderRadius.circular(24), border: Border.all(color: const Color(0xFFF0EAD6))),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFFBEB),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: const Color(0xFFF0EAD6)),
+                        ),
                         child: Column(
                           children: [
                             Stack(
                               children: [
                                 ClipOval(
                                   child: fotoProfilPath != null
-                                      ? Image.file(File(fotoProfilPath!), width: 90, height: 90, fit: BoxFit.cover)
-                                      : Image.asset('assets/profil.jpg', width: 90, height: 90, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.person, size: 90)),
+                                      ? Image.file(
+                                          File(fotoProfilPath!),
+                                          width: 90,
+                                          height: 90,
+                                          fit: BoxFit.cover,
+                                        )
+                                      : Image.asset(
+                                          'assets/profil.jpg',
+                                          width: 90,
+                                          height: 90,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (c, e, s) => const Icon(
+                                            Icons.person,
+                                            size: 90,
+                                          ),
+                                        ),
                                 ),
                                 Positioned(
                                   bottom: 0,
@@ -259,20 +317,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     onTap: _gantiFoto,
                                     child: Container(
                                       padding: const EdgeInsets.all(6),
-                                      decoration: BoxDecoration(color: const Color(0xFF1A3C34), shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
-                                      child: const Icon(Icons.camera_alt, color: Colors.white, size: 14),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF1A3C34),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      child: const Icon(
+                                        Icons.camera_alt,
+                                        color: Colors.white,
+                                        size: 14,
+                                      ),
                                     ),
                                   ),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 12),
-                            Text(namaLengkap, textAlign: TextAlign.center, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF0B3D2E), fontFamily: 'Serif')),
+                            Text(
+                              namaLengkap,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF0B3D2E),
+                                fontFamily: 'Serif',
+                              ),
+                            ),
                             const SizedBox(height: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                              decoration: BoxDecoration(color: const Color(0xFFE6D5B8), borderRadius: BorderRadius.circular(20)),
-                              child: Text(emailUser, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF153D1F))),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE6D5B8),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                emailUser,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF153D1F),
+                                ),
+                              ),
                             ),
                             const SizedBox(height: 16),
                             const Divider(),
@@ -282,36 +373,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               children: [
                                 _buildStat('4', 'Pentas\nDitonton'),
                                 _buildStat('2', 'Tiket\nSiap digunakan'),
-                                _buildStat('3', 'Level\nGames', color: const Color(0xFFD35400)),
+                                _buildStat(
+                                  '3',
+                                  'Level\nGames',
+                                  color: const Color(0xFFD35400),
+                                ),
                               ],
-                            )
+                            ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 24),
-
-                      // ... (KARTU ANGGOTA KELOMPOK & VIDEO, SAMA SEPERTI SEBELUMNYA)
                       Container(
                         padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(color: const Color(0xFFF3E9D2), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFE6D5B8))),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3E9D2),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFFE6D5B8)),
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: const [
-                                Icon(Icons.groups, color: Color(0xFF0B3D2E), size: 18),
+                                Icon(
+                                  Icons.groups,
+                                  color: Color(0xFF0B3D2E),
+                                  size: 18,
+                                ),
                                 SizedBox(width: 8),
-                                Text('ANGGOTA KELOMPOK', style: TextStyle(color: Color(0xFF0B3D2E), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                                Text(
+                                  'ANGGOTA KELOMPOK',
+                                  style: TextStyle(
+                                    color: Color(0xFF0B3D2E),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
                               ],
                             ),
                             const SizedBox(height: 12),
-                            _buildMemberCard('Alvina Kumala Budiastuti', '124240046'),
+                            _buildMemberCard(
+                              'Alvina Kumala Budiastuti',
+                              '124240046',
+                            ),
                             const SizedBox(height: 8),
                             _buildMemberCard('Dhiara Ayu Nasta', '124240185'),
                             const SizedBox(height: 8),
-                            _buildMemberCard('Nurisshifa Alfiyana', '124240186'),
+                            _buildMemberCard(
+                              'Nurisshifa Alfiyana',
+                              '124240186',
+                            ),
                             const SizedBox(height: 20),
-                            const Text('Dokumentasi Kunjungan', style: TextStyle(color: Color(0xFF0B3D2E), fontSize: 12, fontWeight: FontWeight.bold)),
+                            const Text(
+                              'Dokumentasi Kunjungan',
+                              style: TextStyle(
+                                color: Color(0xFF0B3D2E),
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             const SizedBox(height: 8),
                             ClipRRect(
                               borderRadius: BorderRadius.circular(12),
@@ -324,104 +446,217 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           GestureDetector(
                                             onTap: () {
                                               setState(() {
-                                                _videoController.value.isPlaying ? _videoController.pause() : _videoController.play();
+                                                _videoController.value.isPlaying
+                                                    ? _videoController.pause()
+                                                    : _videoController.play();
                                               });
                                             },
-                                            child: Container(color: Colors.black, child: VideoPlayer(_videoController)),
+                                            child: Container(
+                                              color: Colors.black,
+                                              child: VideoPlayer(
+                                                _videoController,
+                                              ),
+                                            ),
                                           ),
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
                                             child: FloatingActionButton.small(
-                                              backgroundColor: Colors.white.withOpacity(0.8),
+                                              backgroundColor: Colors.white
+                                                  .withOpacity(0.8),
                                               elevation: 0,
                                               onPressed: () {
                                                 setState(() {
-                                                  _videoController.value.isPlaying ? _videoController.pause() : _videoController.play();
+                                                  _videoController
+                                                          .value
+                                                          .isPlaying
+                                                      ? _videoController.pause()
+                                                      : _videoController.play();
                                                 });
                                               },
-                                              child: Icon(_videoController.value.isPlaying ? Icons.pause : Icons.play_arrow, color: const Color(0xFF0B3D2E)),
+                                              child: Icon(
+                                                _videoController.value.isPlaying
+                                                    ? Icons.pause
+                                                    : Icons.play_arrow,
+                                                color: const Color(0xFF0B3D2E),
+                                              ),
                                             ),
                                           ),
                                         ],
                                       )
-                                    : Container(color: Colors.grey[300], child: const Center(child: Text('Video belum tersedia / Loading...', style: TextStyle(fontSize: 10)))),
+                                    : Container(
+                                        color: Colors.grey[300],
+                                        child: const Center(
+                                          child: Text(
+                                            'Video belum tersedia / Loading...',
+                                            style: TextStyle(fontSize: 10),
+                                          ),
+                                        ),
+                                      ),
                               ),
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 24),
-
-                      // KARTU REFLEKSI
                       Container(
                         padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(color: const Color(0xFF0B3D2E), borderRadius: BorderRadius.circular(20)),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0B3D2E),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: const [
-                                Icon(Icons.star, color: Color(0xFFE6D5B8), size: 14),
+                                Icon(
+                                  Icons.star,
+                                  color: Color(0xFFE6D5B8),
+                                  size: 14,
+                                ),
                                 SizedBox(width: 6),
-                                Text('CATATAN REFLEKSI PROYEK AKHIR', style: TextStyle(color: Color(0xFFE6D5B8), fontSize: 10, fontWeight: FontWeight.bold)),
+                                Text(
+                                  'CATATAN REFLEKSI PROYEK AKHIR',
+                                  style: TextStyle(
+                                    color: Color(0xFFE6D5B8),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ],
                             ),
                             const SizedBox(height: 12),
-                            const Text('Kesan & Pesan Kuliah Pemrograman Aplikasi Mobile (PAM)', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                            const Text(
+                              'Kesan & Pesan Kuliah Pemrograman Aplikasi Mobile (PAM)',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             const SizedBox(height: 8),
-                            const Text('"Mempelajari pemrograman Flutter membuka wawasan saya tentang cara membuat aplikasi mobile yang bermanfaat..."', style: TextStyle(color: Colors.white70, fontSize: 12, fontStyle: FontStyle.italic)),
+                            const Text(
+                              '"Mempelajari pemrograman Flutter membuka wawasan saya tentang cara membuat aplikasi mobile yang bermanfaat..."',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 24),
-                      
-                      // PENGATURAN AKUN
-                      const Text('PENGATURAN AKUN', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                      const Text(
+                        'PENGATURAN AKUN',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
                       const SizedBox(height: 12),
                       Container(
-                        decoration: BoxDecoration(color: const Color(0xFFF3E9D2), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE6D5B8))),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3E9D2),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFE6D5B8)),
+                        ),
                         child: Column(
                           children: [
                             ListTile(
-                              leading: const Icon(Icons.edit, color: Color(0xFF0B3D2E)),
-                              title: const Text('Ubah Data Identitas Diri', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                              subtitle: const Text('Nama Pribadi, Alamat, Email', style: TextStyle(fontSize: 11)),
-                              onTap: () => setState(() { isBlurred = true; activeModal = 'identity'; }),
+                              leading: const Icon(
+                                Icons.edit,
+                                color: Color(0xFF0B3D2E),
+                              ),
+                              title: const Text(
+                                'Ubah Data Identitas Diri',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              subtitle: const Text(
+                                'Nama Pribadi, Alamat, Email',
+                                style: TextStyle(fontSize: 11),
+                              ),
+                              onTap: () => setState(() {
+                                isBlurred = true;
+                                activeModal = 'identity';
+                              }),
                             ),
                             const Divider(height: 1),
                             ListTile(
-                              leading: const Icon(Icons.fingerprint, color: Color(0xFF0B3D2E)),
-                              title: const Text('Verifikasi Biometrik', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                              subtitle: const Text('Pengenalan Wajah/Sidik Jari', style: TextStyle(fontSize: 11)),
-                              trailing: Switch(value: true, onChanged: (v) {}, activeColor: const Color(0xFF0B3D2E)),
+                              leading: const Icon(
+                                Icons.fingerprint,
+                                color: Color(0xFF0B3D2E),
+                              ),
+                              title: const Text(
+                                'Verifikasi Biometrik',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              subtitle: const Text(
+                                'Pengenalan Wajah/Sidik Jari',
+                                style: TextStyle(fontSize: 11),
+                              ),
+                              trailing: Switch(
+                                value: true,
+                                onChanged: (v) {},
+                                activeColor: const Color(0xFF0B3D2E),
+                              ),
                             ),
                             const Divider(height: 1),
                             ListTile(
-                              leading: const Icon(Icons.lock, color: Color(0xFF0B3D2E)),
-                              title: const Text('Kata Sandi', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                              onTap: () => setState(() { isBlurred = true; activeModal = 'password'; }),
+                              leading: const Icon(
+                                Icons.lock,
+                                color: Color(0xFF0B3D2E),
+                              ),
+                              title: const Text(
+                                'Kata Sandi',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              onTap: () => setState(() {
+                                isBlurred = true;
+                                activeModal = 'password';
+                              }),
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 24),
-                      
-                      // LOGOUT
                       ElevatedButton.icon(
-                        onPressed: () => setState(() { isBlurred = true; activeModal = 'logout'; }),
+                        onPressed: () => setState(() {
+                          isBlurred = true;
+                          activeModal = 'logout';
+                        }),
                         icon: const Icon(Icons.logout),
                         label: const Text('Keluar Akun (Logout)'),
-                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFADBD8), foregroundColor: const Color(0xFFC0392B), minimumSize: const Size(double.infinity, 50)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFADBD8),
+                          foregroundColor: const Color(0xFFC0392B),
+                          minimumSize: const Size(double.infinity, 50),
+                        ),
                       ),
                       const SizedBox(height: 24),
-                      const Center(child: Text('Srimanganti Mobile v. 1.0\n© 2026 Hak Cipta Dilindungi', textAlign: TextAlign.center, style: TextStyle(fontSize: 10, color: Colors.grey))),
+                      const Center(
+                        child: Text(
+                          'Srimanganti Mobile v. 1.0\n© 2026 Hak Cipta Dilindungi',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 10, color: Colors.grey),
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
           ),
-
           if (isBlurred)
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
@@ -431,22 +666,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Container(
                     width: 320,
                     padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(color: const Color(0xFFF9F6EE), borderRadius: BorderRadius.circular(20)),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF9F6EE),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
                     child: _buildModalContent(),
                   ),
                 ),
               ),
-            )
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildStat(String number, String label, {Color color = const Color(0xFF0B3D2E)}) {
+  Widget _buildStat(
+    String number,
+    String label, {
+    Color color = const Color(0xFF0B3D2E),
+  }) {
     return Column(
       children: [
-        Text(number, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-        Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+        Text(
+          number,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 10, color: Colors.grey),
+        ),
       ],
     );
   }
@@ -454,12 +707,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildMemberCard(String name, String nim) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE6D5B8))),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE6D5B8)),
+      ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(6),
-            decoration: const BoxDecoration(color: Color(0xFF0B3D2E), shape: BoxShape.circle),
+            decoration: const BoxDecoration(
+              color: Color(0xFF0B3D2E),
+              shape: BoxShape.circle,
+            ),
             child: const Icon(Icons.person, color: Colors.white, size: 14),
           ),
           const SizedBox(width: 12),
@@ -467,8 +727,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0B3D2E))),
-                Text(nim, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0B3D2E),
+                  ),
+                ),
+                Text(
+                  nim,
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                ),
               ],
             ),
           ),
@@ -477,7 +747,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {bool isObscure = false, bool readOnly = false}) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    bool isObscure = false,
+    bool readOnly = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
@@ -492,10 +767,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
             decoration: InputDecoration(
               filled: true,
               fillColor: readOnly ? Colors.grey[200] : Colors.white,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE6D5B8))),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE6D5B8))),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF0B3D2E))),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 14,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFFE6D5B8)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFFE6D5B8)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFF0B3D2E)),
+              ),
             ),
           ),
         ],
@@ -509,7 +796,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Center(child: Text('Ubah Data Identitas', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'Serif'))),
+          const Center(
+            child: Text(
+              'Ubah Data Identitas',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Serif',
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
           _buildTextField('Nama Lengkap', nameController),
           _buildTextField('Alamat Email', emailController, readOnly: true),
@@ -517,16 +813,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: TextButton(onPressed: () => setState(() => isBlurred = false), child: const Text('Batal', style: TextStyle(color: Colors.black)))),
+              Expanded(
+                child: TextButton(
+                  onPressed: () => setState(() => isBlurred = false),
+                  child: const Text(
+                    'Batal',
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ),
+              ),
               Expanded(
                 child: ElevatedButton(
                   onPressed: _simpanIdentitas,
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0B3D2E)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0B3D2E),
+                  ),
                   child: const Text('Simpan'),
                 ),
               ),
             ],
-          )
+          ),
         ],
       );
     } else if (activeModal == 'password') {
@@ -534,36 +840,82 @@ class _ProfileScreenState extends State<ProfileScreen> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Center(child: Text('Ubah Kata Sandi', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'Serif'))),
+          const Center(
+            child: Text(
+              'Ubah Kata Sandi',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Serif',
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
-          _buildTextField('Kata Sandi Lama', oldPassController, isObscure: true),
-          _buildTextField('Kata Sandi Baru', newPassController, isObscure: true),
+          _buildTextField(
+            'Kata Sandi Lama',
+            oldPassController,
+            isObscure: true,
+          ),
+          _buildTextField(
+            'Kata Sandi Baru',
+            newPassController,
+            isObscure: true,
+          ),
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: TextButton(onPressed: () => setState(() => isBlurred = false), child: const Text('Batal', style: TextStyle(color: Colors.black)))),
+              Expanded(
+                child: TextButton(
+                  onPressed: () => setState(() => isBlurred = false),
+                  child: const Text(
+                    'Batal',
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ),
+              ),
               Expanded(
                 child: ElevatedButton(
                   onPressed: _simpanPassword,
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0B3D2E)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0B3D2E),
+                  ),
                   child: const Text('Simpan'),
                 ),
               ),
             ],
-          )
+          ),
         ],
       );
     } else {
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('Keluar Akun?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'Serif')),
+          const Text(
+            'Keluar Akun?',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Serif',
+            ),
+          ),
           const SizedBox(height: 12),
-          const Text('Apakah Anda yakin ingin keluar dari aplikasi Srimanganti?', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.grey)),
+          const Text(
+            'Apakah Anda yakin ingin keluar dari aplikasi Srimanganti?',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12, color: Colors.grey),
+          ),
           const SizedBox(height: 20),
           Row(
             children: [
-              Expanded(child: TextButton(onPressed: () => setState(() => isBlurred = false), child: const Text('Batal', style: TextStyle(color: Colors.black)))),
+              Expanded(
+                child: TextButton(
+                  onPressed: () => setState(() => isBlurred = false),
+                  child: const Text(
+                    'Batal',
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ),
+              ),
               Expanded(
                 child: ElevatedButton(
                   onPressed: () async {
@@ -571,16 +923,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     if (!mounted) return;
                     Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(builder: (context) => const AuthScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const AuthScreen(),
+                      ),
                       (route) => false,
                     );
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC0392B)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFC0392B),
+                  ),
                   child: const Text('Ya, Keluar'),
                 ),
               ),
             ],
-          )
+          ),
         ],
       );
     }

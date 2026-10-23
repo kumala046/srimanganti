@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tiket_srimanganti/screens/checkout_screen.dart';
 
-/* ---------------- DATA ---------------- */
+import '../services/supabase_service.dart';
+
 enum _Currency { idr, usd, eur, jpy }
 
 enum _Category { wni, wna }
 
-/// Kurs: berapa Rupiah untuk 1 unit mata uang.
-/// CATATAN: ini nilai tetap (statis). Ganti dengan hasil API kurs
-/// kalau mau real-time (mis. exchangerate.host / frankfurter.app).
 const Map<_Currency, double> _idrPerUnit = {
   _Currency.idr: 1,
   _Currency.usd: 16500,
@@ -24,7 +22,6 @@ const Map<_Currency, String> _currencyLabel = {
   _Currency.jpy: 'JPY (¥)',
 };
 
-/// Harga dasar selalu dalam Rupiah.
 const Map<_Category, int> _basePriceIdr = {
   _Category.wni: 15000,
   _Category.wna: 25000,
@@ -59,7 +56,6 @@ String _formatPrice(int idr, _Currency c) {
   }
 }
 
-/* ---------------- WARNA (sama dengan beranda) ---------------- */
 const _kGreen = Color(0xFF1A3C34);
 const _kGold = Color(0xFFB8862B);
 const _kGoldSoft = Color(0xFFF6D58E);
@@ -67,7 +63,6 @@ const _kBg = Color(0xFFFDF8F0);
 const _kBorder = Color(0xFFEADFCB);
 const _kMuted = Color(0xFF6B7A75);
 
-/* ---------------- SCREEN ---------------- */
 class ShowDetailScreen extends StatefulWidget {
   final String title;
   final String day;
@@ -88,6 +83,39 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
   _Currency _currency = _Currency.idr;
   _Category _category = _Category.wni;
   bool _saved = false;
+  List<Map<String, dynamic>> _ulasanList = [];
+  bool _isLoadingUlasan = true;
+  String? _teksRingkasanAI;
+  bool _isLoadingAI = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUlasan();
+  }
+
+  Future<void> _loadUlasan() async {
+    try {
+      final data = await SupabaseService().getUlasan(widget.title);
+      if (mounted) {
+        setState(() {
+          _ulasanList = data;
+          _isLoadingUlasan = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingUlasan = false);
+    }
+  }
+
+  Future<void> _muatRingkasanAI() async {
+    setState(() => _isLoadingAI = true);
+    final hasil = await SupabaseService().generateRingkasanAI(widget.title);
+    setState(() {
+      _teksRingkasanAI = hasil;
+      _isLoadingAI = false;
+    });
+  }
 
   String get _categoryName =>
       _category == _Category.wni ? 'WNI Reguler' : 'WNA Foreigner';
@@ -133,7 +161,6 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
     );
   }
 
-  /* ---------- TOP BAR ---------- */
   Widget _buildTopBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -153,19 +180,11 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
               ),
             ),
           ),
-          IconButton(
-            icon: Icon(
-              _saved ? Icons.bookmark : Icons.bookmark_border,
-              color: _saved ? _kGold : _kGreen,
-            ),
-            onPressed: () => setState(() => _saved = !_saved),
-          ),
         ],
       ),
     );
   }
 
-  /* ---------- HERO ---------- */
   Widget _buildHero() {
     return Container(
       height: 220,
@@ -260,7 +279,6 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
     );
   }
 
-  /* ---------- JADWAL ---------- */
   Widget _card({required Widget child}) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -355,7 +373,6 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
     );
   }
 
-  /* ---------- TIKET ---------- */
   Widget _buildTicketCard() {
     return _card(
       child: Column(
@@ -393,9 +410,7 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
           if (_currency != _Currency.idr) ...[
             const SizedBox(height: 10),
             Text(
-              'Perkiraan kurs: 1 ${_currencyLabel[_currency]!.split(' ').first} '
-              '≈ ${NumberFormat.decimalPattern('id_ID').format(_idrPerUnit[_currency])} IDR. '
-              'Pembayaran tetap dalam Rupiah.',
+              'Perkiraan kurs: 1 ${_currencyLabel[_currency]!.split(' ').first} ≈ ${NumberFormat.decimalPattern('id_ID').format(_idrPerUnit[_currency])} IDR. Pembayaran tetap dalam Rupiah.',
               style: const TextStyle(fontSize: 11, color: _kMuted, height: 1.4),
             ),
           ],
@@ -404,99 +419,191 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
     );
   }
 
-  /* ---------- ULASAN ---------- */
   Widget _buildReviewCard() {
     return _card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Ulasan Penonton',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: _kGreen,
-                  ),
-                ),
-              ),
-              Icon(Icons.star_rounded, color: Color(0xFFF5A623), size: 18),
-              SizedBox(width: 4),
-              Text(
-                '4.9',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: _kGreen,
-                  fontSize: 14,
-                ),
-              ),
-              SizedBox(width: 4),
-              Text('(1.420)', style: TextStyle(color: _kMuted, fontSize: 12)),
-            ],
+          const Text(
+            'Ulasan Penonton',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: _kGreen,
+            ),
           ),
           const SizedBox(height: 10),
-          Text(
-            '98% penonton memuji suasana sakral dan berwibawa pada pentas '
-            '${widget.title} di Bangsal Srimanganti.',
-            style: const TextStyle(fontSize: 12.5, color: _kMuted, height: 1.6),
-          ),
-          const SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFEEF1F4)),
+              color: const Color(0xFFE8F1EE),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFF1A3C34).withValues(alpha: 0.3),
+              ),
             ),
-            child: const Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  radius: 16,
-                  backgroundColor: Color(0xFFC9D6E0),
-                  child: Text(
-                    'BS',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: _kGreen,
+                const Row(
+                  children: [
+                    Icon(Icons.auto_awesome, color: _kGreen, size: 16),
+                    SizedBox(width: 6),
+                    Text(
+                      'Ringkasan AI',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: _kGreen,
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '"Pengalaman cultural tak terlupakan di Jogja!"',
-                        style: TextStyle(
+                const SizedBox(height: 8),
+                _teksRingkasanAI == null
+                    ? SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: _isLoadingAI ? null : _muatRingkasanAI,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: _kGreen,
+                            side: const BorderSide(color: _kGreen),
+                          ),
+                          child: _isLoadingAI
+                              ? const SizedBox(
+                                  height: 16,
+                                  width: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text(
+                                  'Buat Ringkasan dari Ulasan',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                        ),
+                      )
+                    : Text(
+                        _teksRingkasanAI!,
+                        style: const TextStyle(
                           fontSize: 12,
-                          fontStyle: FontStyle.italic,
                           color: _kGreen,
+                          height: 1.5,
+                          fontStyle: FontStyle.italic,
                         ),
                       ),
-                      SizedBox(height: 2),
-                      Text(
-                        'Budi S. • Terverifikasi',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Color(0xFF9AA6A2),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ],
             ),
           ),
+          if (_isLoadingUlasan)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_ulasanList.isEmpty)
+            const Text(
+              'Belum ada ulasan untuk pentas ini. Jadilah yang pertama!',
+              style: TextStyle(
+                fontSize: 12.5,
+                color: _kMuted,
+                fontStyle: FontStyle.italic,
+              ),
+            )
+          else
+            ..._ulasanList.map((ulasan) {
+              final rating = ulasan['rating'] ?? 0;
+              final teks = ulasan['teks_ulasan'] ?? '';
+              final email = ulasan['user_email'] ?? 'Pengguna';
+              final initial = email.isNotEmpty ? email[0].toUpperCase() : 'U';
+              final tanggal = ulasan['created_at'] != null
+                  ? DateFormat(
+                      'd MMM yyyy',
+                      'id_ID',
+                    ).format(DateTime.parse(ulasan['created_at']))
+                  : '-';
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFEEF1F4)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 14,
+                          backgroundColor: const Color(0xFFC9D6E0),
+                          child: Text(
+                            initial,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: _kGreen,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                email,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: _kGreen,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                tanggal,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: Color(0xFF9AA6A2),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Row(
+                          children: List.generate(
+                            5,
+                            (index) => Icon(
+                              index < rating ? Icons.star : Icons.star_border,
+                              color: const Color(0xFFF5A623),
+                              size: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '"$teks"',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                        color: _kGreen,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
         ],
       ),
     );
   }
 
-  /* ---------- BOTTOM BAR ---------- */
   Widget _buildBottomBar() {
     final price = _formatPrice(_basePriceIdr[_category]!, _currency);
     return Container(
@@ -554,11 +661,11 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
               shape: const StadiumBorder(),
             ),
             onPressed: () {
-              // Tentukan harga berdasarkan kategori yang dipilih
               int hargaTiket = _basePriceIdr[_category]!;
+              String namaKategori = _category == _Category.wni
+                  ? 'WNI Reguler'
+                  : 'WNA Foreigner';
 
-              String namaKategori = _category == _Category.wni ? 'WNI Reguler' : 'WNA Foreigner';
-              
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -588,7 +695,6 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
   }
 }
 
-/* ---------------- SELEKTOR MATA UANG (pil geser animasi) ---------------- */
 class _CurrencySelector extends StatelessWidget {
   final _Currency selected;
   final ValueChanged<_Currency> onChanged;
@@ -659,7 +765,6 @@ class _CurrencySelector extends StatelessWidget {
   }
 }
 
-/* ---------------- KARTU KATEGORI (radio titik) ---------------- */
 class _CategoryTile extends StatelessWidget {
   final String title;
   final String price;
@@ -717,7 +822,6 @@ class _CategoryTile extends StatelessWidget {
                 ],
               ),
             ),
-            // Radio: lingkaran luar + titik di tengah yang membesar/mengecil
             AnimatedContainer(
               duration: duration,
               width: 22,

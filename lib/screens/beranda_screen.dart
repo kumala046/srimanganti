@@ -7,7 +7,9 @@ import 'package:intl/intl.dart';
 
 import 'minigame_screen.dart';
 import 'detail_tiket.dart';
-import '../services/db_helper.dart'; // TAMBAHAN IMPORT
+import '../services/db_helper.dart';
+
+import 'package:url_launcher/url_launcher.dart';
 
 /* ---------------- RESPONSIVE HELPER ---------------- */
 enum _ScreenSize { compact, medium, expanded }
@@ -971,12 +973,22 @@ class _PlaceCard extends StatelessWidget {
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Membuka Google Maps (Segera hadir)'),
-                        ),
+                    onPressed: () async {
+                      final Uri url = Uri.parse(
+                        'https://www.google.com/maps/search/?api=1&query=Bangsal+Srimanganti+Keraton+Yogyakarta',
                       );
+
+                      if (!await launchUrl(
+                        url,
+                        mode: LaunchMode.externalApplication,
+                      )) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Tidak bisa membuka Google Maps'),
+                          ),
+                        );
+                      }
                     },
                     child: const Text(
                       '➤ Buka Petunjuk di Google Maps',

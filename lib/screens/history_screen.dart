@@ -101,7 +101,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'Riwayat Tiket',
+                        'Tiket Saya',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
