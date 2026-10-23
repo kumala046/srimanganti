@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'main_navigation_screen.dart';
 import '../services/db_helper.dart';
 import '../services/supabase_service.dart';

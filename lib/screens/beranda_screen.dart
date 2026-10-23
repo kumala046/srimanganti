@@ -1,17 +1,14 @@
 import 'dart:async';
 import 'dart:ui' show PointerDeviceKind;
-
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:intl/intl.dart';
-
 import 'minigame_screen.dart';
 import 'detail_tiket.dart';
 import '../services/db_helper.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 
-/* ---------------- RESPONSIVE HELPER ---------------- */
 enum _ScreenSize { compact, medium, expanded }
 
 class _Layout {

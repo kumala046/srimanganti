@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-
 import 'dart:ui';
 import 'dart:io';
-
 import 'package:video_player/video_player.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
-
 import '../services/db_helper.dart';
 import '../services/supabase_service.dart';
 import 'auth_screen.dart';
