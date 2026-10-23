@@ -5,10 +5,7 @@ import 'package:video_player/video_player.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
-<<<<<<< HEAD
 
-=======
->>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
 import '../services/db_helper.dart';
 import '../services/supabase_service.dart';
 import 'auth_screen.dart';
@@ -29,11 +26,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String waUser = 'Memuat...';
   String? fotoProfilPath;
 
-<<<<<<< HEAD
   bool _isBiometricEnabled = false; 
 
-=======
->>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController waController = TextEditingController();
@@ -67,12 +61,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadUserData() async {
     final email = await DBHelper().getSesi();
     if (email != null) {
-<<<<<<< HEAD
-      // Ambil status biometrik
       final prefs = await SharedPreferences.getInstance();
       bool isBioEnabled = prefs.getBool('biometric_enabled') ?? false;
 
-      // Coba ambil data dari Supabase (Online) terbaru
       try {
         final supabaseUser = await SupabaseService().getUserProfile(email);
         
@@ -88,7 +79,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             waController.text = waUser;
           });
 
-          // Sinkronkan data terbaru ke SQLite lokal
           final db = await DBHelper().database;
           await db.update(
             'users',
@@ -103,38 +93,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _loadFromLocal(email, isBioEnabled);
       }
 
-      // Load foto profil
       final directory = await getApplicationDocumentsDirectory();
       final file = File('${directory.path}/profile_$email.jpg');
       if (file.existsSync() && mounted) {
         setState(() {
           fotoProfilPath = file.path;
-=======
-      final user = await DBHelper().getUserByEmail(email);
-      if (user != null && mounted) {
-        final directory = await getApplicationDocumentsDirectory();
-        final file = File('${directory.path}/profile_$email.jpg');
-
-        setState(() {
-          namaLengkap = user['nama_lengkap'] ?? 'User';
-          emailUser = user['email'] ?? '-';
-          waUser = user['no_whatsapp'] ?? '-';
-
-          nameController.text = namaLengkap;
-          emailController.text = emailUser;
-          waController.text = waUser;
-
-          if (file.existsSync()) {
-            fotoProfilPath = file.path;
-          }
->>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
         });
       }
     }
     _loadStatistik();
   }
 
-<<<<<<< HEAD
   Future<void> _loadFromLocal(String email, bool isBioEnabled) async {
     final user = await DBHelper().getUserByEmail(email);
     if (user != null && mounted) {
@@ -166,8 +135,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-=======
->>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
   Future<void> _loadStatistik() async {
     final prefs = await SharedPreferences.getInstance();
     int level = prefs.getInt('level_games') ?? 1;
@@ -739,21 +706,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                 ),
                                 subtitle: const Text(
-<<<<<<< HEAD
                                   'Aktifkan/Matikan login sidik jari',
                                   style: TextStyle(fontSize: 11),
                                 ),
                                 trailing: Switch(
                                   value: _isBiometricEnabled,
                                   onChanged: _toggleBiometric,
-=======
-                                  'Pengenalan Wajah/Sidik Jari',
-                                  style: TextStyle(fontSize: 11),
-                                ),
-                                trailing: Switch(
-                                  value: true,
-                                  onChanged: (v) {},
->>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                                   activeColor: const Color(0xFF0B3D2E),
                                 ),
                               ),
@@ -1069,13 +1027,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () async {
-<<<<<<< HEAD
                     // KITA TIDAK MENGHAPUS SESI AGAR BIOMETRIK TETAP BISA DIPAKAI
                     // await DBHelper().hapusSesi(); 
                     
-=======
-                    await DBHelper().hapusSesi();
->>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                     if (!mounted) return;
                     Navigator.pushAndRemoveUntil(
                       context,
@@ -1097,8 +1051,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
   }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8

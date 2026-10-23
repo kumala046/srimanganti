@@ -1,37 +1,26 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 
-=======
->>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
 import 'beranda_screen.dart';
 import 'history_screen.dart';
 import 'profile_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
-<<<<<<< HEAD
-  final int initialIndex; // TAMBAHKAN INI
+  final int initialIndex; 
   
   const MainNavigationScreen({Key? key, this.initialIndex = 0}) : super(key: key);
-=======
-  const MainNavigationScreen({Key? key}) : super(key: key);
->>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
 
   @override
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
-<<<<<<< HEAD
-  late int _currentIndex; // UBAH JADI LATE
+  late int _currentIndex;
 
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex; // SET INDEX AWAL
+    _currentIndex = widget.initialIndex;
   }
-=======
-  int _currentIndex = 0;
->>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
 
   final List<Widget> _pages = [
     const HomeScreen(),
@@ -61,8 +50,4 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       ),
     );
   }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8

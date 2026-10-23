@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
-<<<<<<< HEAD
-import 'main_navigation_screen.dart'; // TAMBAHKAN IMPORT INI
-=======
->>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
+import 'main_navigation_screen.dart'; 
 
 class PaymentScreen extends StatefulWidget {
   final int totalAmount;
@@ -17,11 +14,8 @@ class PaymentScreen extends StatefulWidget {
 
 class _PaymentScreenState extends State<PaymentScreen> {
   late Timer _timer;
-  int _secondsRemaining = 15 * 60; // 15 menit dalam detik
-<<<<<<< HEAD
+  int _secondsRemaining = 15 * 60; 
   bool _isLoading = false;
-=======
->>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
 
   @override
   void initState() {
@@ -35,7 +29,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
         setState(() => _secondsRemaining--);
       } else {
         _timer.cancel();
-        // Handle waktu habis di sini
       }
     });
   }
@@ -67,75 +60,37 @@ class _PaymentScreenState extends State<PaymentScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Pembayaran',
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontFamily: 'serif'),
-        ),
+        title: const Text('Pembayaran', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontFamily: 'serif')),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           children: [
-            // --- TOTAL PEMBAYARAN ---
             const Text('Total pembayaran', style: TextStyle(fontSize: 12, color: Colors.grey)),
             const SizedBox(height: 4),
-            Text(
-              _formatRupiah(widget.totalAmount),
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF1A3C34)),
-            ),
+            Text(_formatRupiah(widget.totalAmount), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF1A3C34))),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF6E8C7), // Warna krem agak gelap
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                'Selesaikan dalam $_formattedTime',
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFB8862B)),
-              ),
+              decoration: BoxDecoration(color: const Color(0xFFF6E8C7), borderRadius: BorderRadius.circular(20)),
+              child: Text('Selesaikan dalam $_formattedTime', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFB8862B))),
             ),
             const SizedBox(height: 24),
-
-            // --- KOTAK QR CODE ---
             Container(
               padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-              ),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]),
               child: Column(
                 children: [
-<<<<<<< HEAD
-=======
-                  // Gambar QR Code (Placeholder)
-                  // Kamu bisa mengganti Container ini dengan Image.asset('assets/qris_placeholder.png')
->>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
-                  Container(
-                    width: 200,
-                    height: 200,
-                    color: Colors.white,
-                    child: const Icon(Icons.qr_code_2, size: 200, color: Color(0xFF1A3C34)),
-                  ),
+                  Container(width: 200, height: 200, color: Colors.white, child: const Icon(Icons.qr_code_2, size: 200, color: Color(0xFF1A3C34))),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Kode contoh - NMID [NOMOR NMID]',
-                    style: TextStyle(fontSize: 11, color: Colors.grey),
-                  ),
+                  const Text('Kode contoh - NMID [NOMOR NMID]', style: TextStyle(fontSize: 11, color: Colors.grey)),
                 ],
               ),
             ),
             const SizedBox(height: 24),
-
-            // --- TOMBOL SIMPAN QR ---
             OutlinedButton.icon(
               onPressed: () {
-<<<<<<< HEAD
-=======
-                // TODO: Implementasi simpan gambar QR (perlu package tambahan)
->>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Fitur simpan QR Code segera hadir')));
               },
               icon: const Icon(Icons.download, color: Color(0xFF1A3C34)),
@@ -147,12 +102,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
               ),
             ),
             const SizedBox(height: 32),
-
-<<<<<<< HEAD
-            // --- CARA MEMBAYAR (UDAH GA ADA WA/EMAIL) ---
-=======
-            // --- CARA MEMBAYAR ---
->>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
             const Align(
               alignment: Alignment.centerLeft,
               child: Text('Cara membayar', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1A3C34))),
@@ -160,20 +109,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
             const SizedBox(height: 12),
             _buildInstruction(1, 'Buka aplikasi bank atau e-wallet yang mendukung QRIS.'),
             _buildInstruction(2, 'Pindai kode di atas dan cek nominalnya.'),
-<<<<<<< HEAD
             _buildInstruction(3, 'Setelah pembayaran berhasil, klik tombol di bawah untuk melihat tiket.'),
-=======
-            _buildInstruction(3, 'E-tiket dikirim ke WhatsApp dan email setelah pembayaran berhasil.'),
->>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
-
             const SizedBox(height: 40),
-
-            // --- TOMBOL CEK STATUS ---
             ElevatedButton(
-<<<<<<< HEAD
               onPressed: _isLoading ? null : () async {
                 setState(() => _isLoading = true);
-                await Future.delayed(const Duration(seconds: 1)); // Simulasi loading cek server
+                await Future.delayed(const Duration(seconds: 1)); 
                 if (!mounted) return;
                 setState(() => _isLoading = false);
 
@@ -186,7 +127,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     actions: [
                       TextButton(
                         onPressed: () {
-                          // Arahkan ke halaman utama, lalu pindah ke tab Riwayat (index 1)
                           Navigator.pushAndRemoveUntil(
                             context,
                             MaterialPageRoute(builder: (context) => const MainNavigationScreen(initialIndex: 1)),
@@ -194,22 +134,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           );
                         },
                         child: const Text('Lihat Tiket', style: TextStyle(fontWeight: FontWeight.bold)),
-=======
-              onPressed: () {
-                // TODO: Logika cek status pembayaran ke backend
-                // Simulasi berhasil:
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Pembayaran Berhasil'),
-                    content: const Text('E-Ticket telah dikirim ke WhatsApp dan Email Anda.'),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.popUntil(context, (route) => route.isFirst);
-                        },
-                        child: const Text('OK'),
->>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                       )
                     ],
                   ),
@@ -221,13 +145,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 minimumSize: const Size(double.infinity, 55),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
-<<<<<<< HEAD
               child: _isLoading 
                   ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                   : const Text('Cek Status Pembayaran', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-=======
-              child: const Text('Cek Status Pembayaran', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
->>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
             ),
             const SizedBox(height: 20),
           ],
@@ -243,9 +163,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('$number. ', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
-          Expanded(
-            child: Text(text, style: const TextStyle(fontSize: 12, color: Colors.grey, height: 1.5)),
-          ),
+          Expanded(child: Text(text, style: const TextStyle(fontSize: 12, color: Colors.grey, height: 1.5))),
         ],
       ),
     );

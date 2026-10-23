@@ -79,7 +79,7 @@ class _AuthScreenState extends State<AuthScreen> {
         if (existingUser.isEmpty) {
           await db.insert('users', {
             'email': cleanEmail,
-            'password': password, // Di lokal sebaiknya jangan simpan plain text, tapi dibiarkan dulu sesuai kode asli
+            'password': password,
             'nama_lengkap': 'User',
             'no_whatsapp': '-',
           });
