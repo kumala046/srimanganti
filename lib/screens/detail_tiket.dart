@@ -3,12 +3,25 @@ import 'package:intl/intl.dart';
 import 'package:tiket_srimanganti/screens/checkout_screen.dart';
 
 import '../services/supabase_service.dart';
+<<<<<<< HEAD
 import '../services/currency_service.dart'; 
+=======
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
 
 enum _Currency { idr, usd, eur, jpy }
 
 enum _Category { wni, wna }
 
+<<<<<<< HEAD
+=======
+const Map<_Currency, double> _idrPerUnit = {
+  _Currency.idr: 1,
+  _Currency.usd: 16500,
+  _Currency.eur: 19200,
+  _Currency.jpy: 108,
+};
+
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
 const Map<_Currency, String> _currencyLabel = {
   _Currency.idr: 'IDR (Rp)',
   _Currency.usd: 'USD (\$)',
@@ -21,6 +34,7 @@ const Map<_Category, int> _basePriceIdr = {
   _Category.wna: 25000,
 };
 
+<<<<<<< HEAD
 // FUNGSI FORMAT HARGA (DIPERBAIKI)
 String _formatPrice(int idr, _Currency c, Map<String, double> idrRates) {
   if (c == _Currency.idr) {
@@ -45,6 +59,34 @@ String _formatPrice(int idr, _Currency c, Map<String, double> idrRates) {
       return NumberFormat.currency(locale: 'en_US', symbol: '¥', decimalDigits: 0).format(finalAmount);
     default:
       return '';
+=======
+String _formatPrice(int idr, _Currency c) {
+  switch (c) {
+    case _Currency.idr:
+      return NumberFormat.currency(
+        locale: 'id_ID',
+        symbol: 'Rp ',
+        decimalDigits: 0,
+      ).format(idr);
+    case _Currency.usd:
+      return NumberFormat.currency(
+        locale: 'en_US',
+        symbol: '\$',
+        decimalDigits: 2,
+      ).format(idr / _idrPerUnit[c]!);
+    case _Currency.eur:
+      return NumberFormat.currency(
+        locale: 'en_US',
+        symbol: '€',
+        decimalDigits: 2,
+      ).format(idr / _idrPerUnit[c]!);
+    case _Currency.jpy:
+      return NumberFormat.currency(
+        locale: 'en_US',
+        symbol: '¥',
+        decimalDigits: 0,
+      ).format(idr / _idrPerUnit[c]!);
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
   }
 }
 
@@ -80,14 +122,18 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
   String? _teksRingkasanAI;
   bool _isLoadingAI = false;
 
+<<<<<<< HEAD
   // VARIABEL KURS
   Map<String, double> _idrRates = {}; 
   bool _isLoadingRates = true;
 
+=======
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
   @override
   void initState() {
     super.initState();
     _loadUlasan();
+<<<<<<< HEAD
     _loadRates(); 
   }
 
@@ -103,6 +149,8 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
         _isLoadingRates = false;
       });
     }
+=======
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
   }
 
   Future<void> _loadUlasan() async {
@@ -184,7 +232,15 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
           const Expanded(
             child: Text(
               'Detail Pentas',
+<<<<<<< HEAD
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _kGreen),
+=======
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: _kGreen,
+              ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
             ),
           ),
         ],
@@ -195,7 +251,14 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
   Widget _buildHero() {
     return Container(
       height: 220,
+<<<<<<< HEAD
       decoration: BoxDecoration(color: _kGreen, borderRadius: BorderRadius.circular(24)),
+=======
+      decoration: BoxDecoration(
+        color: _kGreen,
+        borderRadius: BorderRadius.circular(24),
+      ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
       clipBehavior: Clip.antiAlias,
       child: Stack(
         fit: StackFit.expand,
@@ -207,7 +270,14 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
             errorBuilder: (_, __, ___) => Container(
               color: const Color(0xFFD9D9D9),
               alignment: Alignment.center,
+<<<<<<< HEAD
               child: const Icon(Icons.image_not_supported_outlined, color: Colors.black38),
+=======
+              child: const Icon(
+                Icons.image_not_supported_outlined,
+                color: Colors.black38,
+              ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
             ),
           ),
           const DecoratedBox(
@@ -226,7 +296,14 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Container(
+<<<<<<< HEAD
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+=======
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                   decoration: BoxDecoration(
                     color: _kGoldSoft.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
@@ -234,7 +311,15 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
                   ),
                   child: const Text(
                     'Pentas Sakral Keraton',
+<<<<<<< HEAD
                     style: TextStyle(color: _kGoldSoft, fontSize: 11, fontWeight: FontWeight.w600),
+=======
+                    style: TextStyle(
+                      color: _kGoldSoft,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -243,7 +328,16 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
+<<<<<<< HEAD
                   style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w700, fontFamily: 'serif'),
+=======
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'serif',
+                  ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                 ),
                 const SizedBox(height: 6),
                 const Row(
@@ -275,24 +369,76 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: _kBorder),
+<<<<<<< HEAD
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+=======
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
       ),
       child: child,
     );
   }
 
+<<<<<<< HEAD
   Widget _infoRow({required IconData icon, required Color iconColor, required Color bgColor, required String label, required String value}) {
     return Row(
       children: [
         Container(width: 40, height: 40, decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: iconColor, size: 20)),
+=======
+  Widget _infoRow({
+    required IconData icon,
+    required Color iconColor,
+    required Color bgColor,
+    required String label,
+    required String value,
+  }) {
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: iconColor, size: 20),
+        ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
         const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+<<<<<<< HEAD
               Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.8, color: Color(0xFF9AA6A2))),
               const SizedBox(height: 2),
               Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: _kGreen)),
+=======
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                  color: Color(0xFF9AA6A2),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: _kGreen,
+                ),
+              ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
             ],
           ),
         ),
@@ -304,9 +450,30 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
     return _card(
       child: Column(
         children: [
+<<<<<<< HEAD
           _infoRow(icon: Icons.calendar_month_outlined, iconColor: _kGreen, bgColor: const Color(0xFFE8EFEC), label: 'JADWAL RUTIN', value: 'Setiap ${widget.day}, 09.00 - 11.00 WIB'),
           const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Divider(height: 1, color: Color(0xFFF0E8D8))),
           _infoRow(icon: Icons.schedule, iconColor: const Color(0xFFE08A1E), bgColor: const Color(0xFFFFF3E0), label: 'DURASI PEMENTASAN', value: '120 Menit (Tanpa Jeda)'),
+=======
+          _infoRow(
+            icon: Icons.calendar_month_outlined,
+            iconColor: _kGreen,
+            bgColor: const Color(0xFFE8EFEC),
+            label: 'JADWAL RUTIN',
+            value: 'Setiap ${widget.day}, 09.00 - 11.00 WIB',
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Divider(height: 1, color: Color(0xFFF0E8D8)),
+          ),
+          _infoRow(
+            icon: Icons.schedule,
+            iconColor: const Color(0xFFE08A1E),
+            bgColor: const Color(0xFFFFF3E0),
+            label: 'DURASI PEMENTASAN',
+            value: '120 Menit (Tanpa Jeda)',
+          ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
         ],
       ),
     );
@@ -317,6 +484,7 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+<<<<<<< HEAD
           const Text('Pilih Kategori & Mata Uang', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _kGreen)),
           const SizedBox(height: 14),
           _CurrencySelector(selected: _currency, onChanged: (c) => setState(() => _currency = c)),
@@ -344,6 +512,41 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
             const SizedBox(height: 10),
             Text(
               'Kurs real-time bersumber dari penyedia kurs publik. Pembayaran tetap dalam Rupiah.',
+=======
+          const Text(
+            'Pilih Kategori & Mata Uang',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: _kGreen,
+            ),
+          ),
+          const SizedBox(height: 14),
+          _CurrencySelector(
+            selected: _currency,
+            onChanged: (c) => setState(() => _currency = c),
+          ),
+          const SizedBox(height: 14),
+          _CategoryTile(
+            title: 'WNI (Reguler)',
+            price:
+                '${_formatPrice(_basePriceIdr[_Category.wni]!, _currency)} / orang',
+            selected: _category == _Category.wni,
+            onTap: () => setState(() => _category = _Category.wni),
+          ),
+          const SizedBox(height: 10),
+          _CategoryTile(
+            title: 'WNA (Foreigner)',
+            price:
+                '${_formatPrice(_basePriceIdr[_Category.wna]!, _currency)} / orang',
+            selected: _category == _Category.wna,
+            onTap: () => setState(() => _category = _Category.wna),
+          ),
+          if (_currency != _Currency.idr) ...[
+            const SizedBox(height: 10),
+            Text(
+              'Perkiraan kurs: 1 ${_currencyLabel[_currency]!.split(' ').first} ≈ ${NumberFormat.decimalPattern('id_ID').format(_idrPerUnit[_currency])} IDR. Pembayaran tetap dalam Rupiah.',
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
               style: const TextStyle(fontSize: 11, color: _kMuted, height: 1.4),
             ),
           ],
@@ -357,7 +560,18 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+<<<<<<< HEAD
           const Text('Ulasan Penonton', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _kGreen)),
+=======
+          const Text(
+            'Ulasan Penonton',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: _kGreen,
+            ),
+          ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
           const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.all(12),
@@ -365,7 +579,13 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
             decoration: BoxDecoration(
               color: const Color(0xFFE8F1EE),
               borderRadius: BorderRadius.circular(12),
+<<<<<<< HEAD
               border: Border.all(color: const Color(0xFF1A3C34).withValues(alpha: 0.3)),
+=======
+              border: Border.all(
+                color: const Color(0xFF1A3C34).withValues(alpha: 0.3),
+              ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -374,7 +594,18 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
                   children: [
                     Icon(Icons.auto_awesome, color: _kGreen, size: 16),
                     SizedBox(width: 6),
+<<<<<<< HEAD
                     Text('Ringkasan AI', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: _kGreen)),
+=======
+                    Text(
+                      'Ringkasan AI',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: _kGreen,
+                      ),
+                    ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -383,6 +614,7 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
                         width: double.infinity,
                         child: OutlinedButton(
                           onPressed: _isLoadingAI ? null : _muatRingkasanAI,
+<<<<<<< HEAD
                           style: OutlinedButton.styleFrom(foregroundColor: _kGreen, side: const BorderSide(color: _kGreen)),
                           child: _isLoadingAI
                               ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
@@ -390,13 +622,60 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
                         ),
                       )
                     : Text(_teksRingkasanAI!, style: const TextStyle(fontSize: 12, color: _kGreen, height: 1.5, fontStyle: FontStyle.italic)),
+=======
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: _kGreen,
+                            side: const BorderSide(color: _kGreen),
+                          ),
+                          child: _isLoadingAI
+                              ? const SizedBox(
+                                  height: 16,
+                                  width: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text(
+                                  'Buat Ringkasan dari Ulasan',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                        ),
+                      )
+                    : Text(
+                        _teksRingkasanAI!,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: _kGreen,
+                          height: 1.5,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
               ],
             ),
           ),
           if (_isLoadingUlasan)
+<<<<<<< HEAD
             const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()))
           else if (_ulasanList.isEmpty)
             const Text('Belum ada ulasan untuk pentas ini. Jadilah yang pertama!', style: TextStyle(fontSize: 12.5, color: _kMuted, fontStyle: FontStyle.italic))
+=======
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_ulasanList.isEmpty)
+            const Text(
+              'Belum ada ulasan untuk pentas ini. Jadilah yang pertama!',
+              style: TextStyle(
+                fontSize: 12.5,
+                color: _kMuted,
+                fontStyle: FontStyle.italic,
+              ),
+            )
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
           else
             ..._ulasanList.map((ulasan) {
               final rating = ulasan['rating'] ?? 0;
@@ -404,7 +683,14 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
               final email = ulasan['user_email'] ?? 'Pengguna';
               final initial = email.isNotEmpty ? email[0].toUpperCase() : 'U';
               final tanggal = ulasan['created_at'] != null
+<<<<<<< HEAD
                   ? DateFormat('d MMM yyyy', 'id_ID').format(DateTime.parse(ulasan['created_at']))
+=======
+                  ? DateFormat(
+                      'd MMM yyyy',
+                      'id_ID',
+                    ).format(DateTime.parse(ulasan['created_at']))
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                   : '-';
 
               return Container(
@@ -420,12 +706,28 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
                   children: [
                     Row(
                       children: [
+<<<<<<< HEAD
                         CircleAvatar(radius: 14, backgroundColor: const Color(0xFFC9D6E0), child: Text(initial, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _kGreen))),
+=======
+                        CircleAvatar(
+                          radius: 14,
+                          backgroundColor: const Color(0xFFC9D6E0),
+                          child: Text(
+                            initial,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: _kGreen,
+                            ),
+                          ),
+                        ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                         const SizedBox(width: 8),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+<<<<<<< HEAD
                               Text(email, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: _kGreen), overflow: TextOverflow.ellipsis),
                               Text(tanggal, style: const TextStyle(fontSize: 10, color: Color(0xFF9AA6A2))),
                             ],
@@ -436,6 +738,48 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text('"$teks"', style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: _kGreen)),
+=======
+                              Text(
+                                email,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: _kGreen,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                tanggal,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: Color(0xFF9AA6A2),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Row(
+                          children: List.generate(
+                            5,
+                            (index) => Icon(
+                              index < rating ? Icons.star : Icons.star_border,
+                              color: const Color(0xFFF5A623),
+                              size: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '"$teks"',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                        color: _kGreen,
+                      ),
+                    ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                   ],
                 ),
               );
@@ -446,11 +790,25 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
   }
 
   Widget _buildBottomBar() {
+<<<<<<< HEAD
+=======
+    final price = _formatPrice(_basePriceIdr[_category]!, _currency);
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
       decoration: BoxDecoration(
         color: Colors.white,
+<<<<<<< HEAD
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, -3))],
+=======
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, -3),
+          ),
+        ],
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
       ),
       child: Row(
         children: [
@@ -459,11 +817,36 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
+<<<<<<< HEAD
                 const Text('KATEGORI DIPILIH', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.6, color: Color(0xFF9AA6A2))),
                 const SizedBox(height: 2),
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 200),
                   child: Text(_categoryName, key: ValueKey(_categoryName), overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _kGreen)),
+=======
+                const Text(
+                  'KATEGORI DIPILIH',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
+                    color: Color(0xFF9AA6A2),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: Text(
+                    '$_categoryName • $price',
+                    key: ValueKey('$_categoryName$price'),
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: _kGreen,
+                    ),
+                  ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                 ),
               ],
             ),
@@ -479,13 +862,37 @@ class _ShowDetailScreenState extends State<ShowDetailScreen> {
             ),
             onPressed: () {
               int hargaTiket = _basePriceIdr[_category]!;
+<<<<<<< HEAD
               String namaKategori = _category == _Category.wni ? 'WNI Reguler' : 'WNA Foreigner';
               Navigator.push(context, MaterialPageRoute(builder: (context) => CheckoutScreen(title: widget.title, basePrice: hargaTiket, categoryName: namaKategori)));
+=======
+              String namaKategori = _category == _Category.wni
+                  ? 'WNI Reguler'
+                  : 'WNA Foreigner';
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CheckoutScreen(
+                    title: widget.title,
+                    basePrice: hargaTiket,
+                    categoryName: namaKategori,
+                  ),
+                ),
+              );
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
             },
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+<<<<<<< HEAD
                 Text('Pesan Tiket', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+=======
+                Text(
+                  'Pesan Tiket',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                 SizedBox(width: 8),
                 Icon(Icons.arrow_forward, size: 18),
               ],
@@ -511,7 +918,14 @@ class _CurrencySelector extends StatelessWidget {
     return Container(
       height: 42,
       padding: const EdgeInsets.all(4),
+<<<<<<< HEAD
       decoration: BoxDecoration(color: const Color(0xFFF1F4F6), borderRadius: BorderRadius.circular(14)),
+=======
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F4F6),
+        borderRadius: BorderRadius.circular(14),
+      ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
       child: LayoutBuilder(
         builder: (context, constraints) {
           final segW = constraints.maxWidth / values.length;
@@ -524,7 +938,16 @@ class _CurrencySelector extends StatelessWidget {
                 top: 0,
                 bottom: 0,
                 width: segW,
+<<<<<<< HEAD
                 child: Container(decoration: BoxDecoration(color: _kGreen, borderRadius: BorderRadius.circular(10))),
+=======
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: _kGreen,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
               ),
               Row(
                 children: values.map((c) {
@@ -538,7 +961,15 @@ class _CurrencySelector extends StatelessWidget {
                           fit: BoxFit.scaleDown,
                           child: AnimatedDefaultTextStyle(
                             duration: const Duration(milliseconds: 200),
+<<<<<<< HEAD
                             style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: isSel ? Colors.white : _kMuted),
+=======
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: isSel ? Colors.white : _kMuted,
+                            ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                             child: Text(_currencyLabel[c]!),
                           ),
                         ),
@@ -561,7 +992,16 @@ class _CategoryTile extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
+<<<<<<< HEAD
   const _CategoryTile({required this.title, required this.price, required this.selected, required this.onTap});
+=======
+  const _CategoryTile({
+    required this.title,
+    required this.price,
+    required this.selected,
+    required this.onTap,
+  });
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
 
   @override
   Widget build(BuildContext context) {
@@ -576,7 +1016,13 @@ class _CategoryTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? _kGreen : Colors.white,
           borderRadius: BorderRadius.circular(14),
+<<<<<<< HEAD
           border: Border.all(color: selected ? _kGreen : const Color(0xFFE3E8EC)),
+=======
+          border: Border.all(
+            color: selected ? _kGreen : const Color(0xFFE3E8EC),
+          ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
         ),
         child: Row(
           children: [
@@ -586,13 +1032,28 @@ class _CategoryTile extends StatelessWidget {
                 children: [
                   AnimatedDefaultTextStyle(
                     duration: duration,
+<<<<<<< HEAD
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: selected ? Colors.white : _kGreen),
+=======
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: selected ? Colors.white : _kGreen,
+                    ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                     child: Text(title),
                   ),
                   const SizedBox(height: 3),
                   AnimatedDefaultTextStyle(
                     duration: duration,
+<<<<<<< HEAD
                     style: TextStyle(fontSize: 12, color: selected ? const Color(0xFFCFE0DA) : _kMuted),
+=======
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: selected ? const Color(0xFFCFE0DA) : _kMuted,
+                    ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                     child: Text(price),
                   ),
                 ],
@@ -605,13 +1066,31 @@ class _CategoryTile extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
+<<<<<<< HEAD
                 border: Border.all(color: selected ? _kGoldSoft : const Color(0xFFCBD3D8), width: 2),
+=======
+                border: Border.all(
+                  color: selected ? _kGoldSoft : const Color(0xFFCBD3D8),
+                  width: 2,
+                ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
               ),
               child: AnimatedScale(
                 scale: selected ? 1 : 0,
                 duration: duration,
                 curve: Curves.easeOutBack,
+<<<<<<< HEAD
                 child: Container(width: 10, height: 10, decoration: const BoxDecoration(shape: BoxShape.circle, color: _kGoldSoft)),
+=======
+                child: Container(
+                  width: 10,
+                  height: 10,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kGoldSoft,
+                  ),
+                ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
               ),
             ),
           ],
@@ -619,4 +1098,8 @@ class _CategoryTile extends StatelessWidget {
       ),
     );
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8

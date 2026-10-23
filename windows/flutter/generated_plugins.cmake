@@ -4,9 +4,13 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   app_links
+<<<<<<< HEAD
   connectivity_plus
   file_selector_windows
   local_auth_windows
+=======
+  file_selector_windows
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
   url_launcher_windows
 )
 

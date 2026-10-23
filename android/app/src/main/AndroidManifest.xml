@@ -2,7 +2,10 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.INTERNET" />
+<<<<<<< HEAD
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+=======
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
 
     <application
         android:label="tiket_srimanganti"

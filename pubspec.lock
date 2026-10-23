@@ -105,6 +105,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.19.1"
+<<<<<<< HEAD
   connectivity_plus:
     dependency: transitive
     description:
@@ -121,6 +122,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.0"
+=======
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
   convert:
     dependency: transitive
     description:
@@ -138,7 +141,11 @@ packages:
     source: hosted
     version: "0.3.5+5"
   crypto:
+<<<<<<< HEAD
     dependency: "direct main"
+=======
+    dependency: transitive
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
     description:
       name: crypto
       sha256: c8ea0233063ba03258fbcf2ca4d6dadfefe14f02fab57702265467a19f27fadf
@@ -161,6 +168,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.9"
+<<<<<<< HEAD
   currency_sdk:
     dependency: "direct main"
     description:
@@ -169,6 +177,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.1"
+=======
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
   dart_jsonwebtoken:
     dependency: transitive
     description:
@@ -328,6 +338,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.27.3"
+<<<<<<< HEAD
   hive:
     dependency: transitive
     description:
@@ -344,6 +355,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.0"
+=======
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
   hooks:
     dependency: transitive
     description:
@@ -512,6 +525,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.0"
+<<<<<<< HEAD
   local_auth:
     dependency: "direct main"
     description:
@@ -552,6 +566,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.11"
+=======
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
   logging:
     dependency: transitive
     description:
@@ -592,6 +608,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.0"
+<<<<<<< HEAD
   nm:
     dependency: transitive
     description:
@@ -600,6 +617,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.5.0"
+=======
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
   objective_c:
     dependency: transitive
     description:
@@ -728,6 +747,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.1"
+<<<<<<< HEAD
   qr:
     dependency: transitive
     description:
@@ -736,6 +756,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.2"
+=======
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
   realtime_client:
     dependency: transitive
     description:

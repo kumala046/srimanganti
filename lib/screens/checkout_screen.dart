@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+<<<<<<< HEAD
 
 import 'payment_screen.dart';
 import '../services/supabase_service.dart';
 import '../services/db_helper.dart';
 import '../services/notification_service.dart';
+=======
+import 'payment_screen.dart';
+import '../services/supabase_service.dart';
+import '../services/db_helper.dart';
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
 
 class CheckoutScreen extends StatefulWidget {
   final String title;
@@ -46,7 +52,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     ).format(amount);
   }
 
+<<<<<<< HEAD
   void _prosesPemesanan() async {
+=======
+  // FUNGSI SIMPAN KE SUPABASE SEBELUM BAYAR
+  void _prosesPemesanan() async {
+    // Tampilkan loading
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -56,8 +68,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     try {
       final email = await DBHelper().getSesi();
       final kodeBooking = 'KGY-SRM-${DateTime.now().millisecondsSinceEpoch}';
+<<<<<<< HEAD
       
       final tglKunjungan = DateTime.now().add(const Duration(days: 7)).toIso8601String().split('T')[0];
+=======
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
 
       await SupabaseService().createTiket(
         userEmail: email ?? 'guest@srimanganti.com',
@@ -65,6 +80,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         kodeBooking: kodeBooking,
         jumlahTiket: ticketCount,
         totalHarga: totalBayar,
+<<<<<<< HEAD
         tanggalKunjungan: tglKunjungan,
       );
 
@@ -78,6 +94,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (!mounted) return;
       Navigator.pop(context); 
 
+=======
+      );
+
+      if (!mounted) return;
+      Navigator.pop(context); // Tutup loading
+
+      // Pindah ke halaman pembayaran
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -86,7 +110,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       );
     } catch (e) {
       if (!mounted) return;
+<<<<<<< HEAD
       Navigator.pop(context);
+=======
+      Navigator.pop(context); // Tutup loading
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Gagal memproses tiket: $e')));
     }
@@ -425,9 +453,39 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ],
               ),
             ),
+<<<<<<< HEAD
             
             // --- (BAGIAN INFO NOTIFIKASI SUDAH DIHAPUS) ---
             
+=======
+            const SizedBox(height: 12),
+
+            // INFO NOTIFIKASI
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F1EE),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.info_outline, color: Color(0xFF1A3C34), size: 16),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Informasi tiket dan konfirmasi pemesanan akan dikirim ke alamat email pemesan.',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Color(0xFF1A3C34),
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
             const SizedBox(height: 12),
 
             // RINCIAN PEMBAYARAN
@@ -482,6 +540,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ],
         ),
       ),
+<<<<<<< HEAD
+=======
+
+      // BOTTOM BAR (UBAH ONPRESSED-NYA)
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
       bottomNavigationBar: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
@@ -521,7 +584,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ],
               ),
               ElevatedButton(
+<<<<<<< HEAD
                 onPressed: _prosesPemesanan,
+=======
+                onPressed: _prosesPemesanan, // Memanggil fungsi database
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1A3C34),
                   foregroundColor: Colors.white,
@@ -580,4 +647,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ],
     );
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8

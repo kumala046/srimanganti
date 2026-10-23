@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:tiket_srimanganti/screens/e_ticket_screen.dart';
+<<<<<<< HEAD
 import 'package:intl/intl.dart';
 import 'dart:async'; 
 
+=======
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
 import '../models/ticket_model.dart';
 import 'review_screen.dart';
 import '../services/db_helper.dart';
@@ -23,7 +26,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   List<TicketModel> allTickets = [];
   bool isLoading = true;
+<<<<<<< HEAD
   String? errorMessage;
+=======
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
 
   @override
   void initState() {
@@ -32,6 +38,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _loadTiketDariDatabase() async {
+<<<<<<< HEAD
     setState(() {
       isLoading = true;
       errorMessage = null;
@@ -69,6 +76,24 @@ class _HistoryScreenState extends State<HistoryScreen> {
               subtitle: 'Kunjungan: $tglFormatted',
               detail: '${item['jumlah_tiket'] ?? 1} tiket',
               bookingCode: item['kode_booking']?.toString() ?? '-',
+=======
+    setState(() => isLoading = true);
+    try {
+      final email = await DBHelper().getSesi();
+      if (email != null && email.isNotEmpty) {
+        final data = await SupabaseService().getHistoryTiket(email);
+        setState(() {
+          allTickets = data.map((item) {
+            return TicketModel(
+              id: item['id'], // ID dari database
+              location: 'Bangsal Srimanganti',
+              status: item['status'] ?? 'Aktif',
+              isCompleted: item['status'] == 'Selesai',
+              title: item['judul_pagelaran'] ?? 'Pagelaran Keraton',
+              subtitle: 'Dibeli: ${item['created_at'].toString().substring(0, 10)}',
+              detail: '${item['jumlah_tiket']} tiket',
+              bookingCode: item['kode_booking'] ?? '-',
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
               imageAsset: '',
               iconBgColor: const Color(0xFF0B3D2E),
             );
@@ -76,6 +101,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           isLoading = false;
         });
       } else {
+<<<<<<< HEAD
         setState(() {
           isLoading = false;
           errorMessage = "Sesi login tidak ditemukan.";
@@ -92,6 +118,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
   // ==========================================
   // FUNGSI BATALKAN TIKET (DIPERBAIKI TOTAL)
   // ==========================================
+=======
+        setState(() => isLoading = false);
+      }
+    } catch (e) {
+      print('Error load tiket: $e');
+      setState(() => isLoading = false);
+    }
+  }
+
+  // FUNGSI BATALKAN TIKET
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
   Future<void> _batalkanTiket(TicketModel ticket) async {
     showDialog(
       context: context,
@@ -99,7 +136,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Text('Batalkan Tiket?', style: TextStyle(fontFamily: 'Georgia', fontWeight: FontWeight.bold)),
+<<<<<<< HEAD
           content: const Text('Apakah Anda yakin ingin membatalkan tiket ini?'),
+=======
+          content: const Text('Apakah Anda yakin ingin membatalkan tiket ini? Dana refund akan diproses maksimal 1x24 jam.'),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -107,6 +148,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
+<<<<<<< HEAD
                 Navigator.pop(context); // Tutup Dialog Konfirmasi
                 
                 // Tampilkan Loading
@@ -153,6 +195,30 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       content: Text('Gagal membatalkan: ${e.toString().replaceAll("Exception: ", "")}'),
                       backgroundColor: Colors.red,
                     ),
+=======
+                Navigator.pop(context); // Tutup dialog
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (_) => const Center(child: CircularProgressIndicator()),
+                );
+                try {
+                  await SupabaseService().updateStatusTiket(ticket.id, 'Dibatalkan');
+                  if (!mounted) return;
+                  Navigator.pop(context);
+                  _loadTiketDariDatabase();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Tiket berhasil dibatalkan. Refund diproses 1x24 jam.'),
+                      backgroundColor: Color(0xFF0B3D2E),
+                    ),
+                  );
+                } catch (e) {
+                  if (!mounted) return;
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Gagal membatalkan tiket: $e')),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                   );
                 }
               },
@@ -174,7 +240,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
       bool matchStatus = false;
       if (selectedFilter == 'Semua') {
         matchStatus = true;
+<<<<<<< HEAD
       } else if (selectedFilter == 'Akan Datang' && !ticket.isCompleted && ticket.status != 'Dibatalkan') {
+=======
+      } else if (selectedFilter == 'Akan Datang' && !ticket.isCompleted) {
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
         matchStatus = true;
       } else if (selectedFilter == 'Selesai' && ticket.isCompleted) {
         matchStatus = true;
@@ -202,7 +272,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     children: [
                       const Text(
                         'Tiket Saya',
+<<<<<<< HEAD
                         style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF0B3D2E), fontFamily: 'Georgia'),
+=======
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0B3D2E),
+                          fontFamily: 'Georgia',
+                        ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                       ),
                       GestureDetector(
                         onTap: () {
@@ -216,7 +295,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         },
                         child: Container(
                           padding: const EdgeInsets.all(8),
+<<<<<<< HEAD
                           decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))]),
+=======
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
+                            ],
+                          ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                           child: const Icon(Icons.search, color: Colors.black87),
                         ),
                       ),
@@ -232,8 +321,19 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         filled: true,
                         fillColor: Colors.white,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+<<<<<<< HEAD
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE6D5B8))),
                         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE6D5B8))),
+=======
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFE6D5B8)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFE6D5B8)),
+                        ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                       ),
                     ),
                   ],
@@ -256,6 +356,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ),
             ),
             Expanded(
+<<<<<<< HEAD
               child: RefreshIndicator(
                 onRefresh: _loadTiketDariDatabase,
                 color: const Color(0xFF0B3D2E),
@@ -271,6 +372,26 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                 itemBuilder: (context, index) => _buildTicketCard(filteredTickets[index]),
                               ),
               ),
+=======
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator(color: Color(0xFF0B3D2E)))
+                  : filteredTickets.isEmpty
+                      ? const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.confirmation_number_outlined, size: 50, color: Colors.grey),
+                              SizedBox(height: 10),
+                              Text('Belum ada tiket.', style: TextStyle(color: Colors.grey, fontSize: 14)),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                          itemCount: filteredTickets.length,
+                          itemBuilder: (context, index) => _buildTicketCard(filteredTickets[index]),
+                        ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
             ),
           ],
         ),
@@ -291,13 +412,39 @@ class _HistoryScreenState extends State<HistoryScreen> {
         ),
         child: Row(
           children: [
+<<<<<<< HEAD
             Text(label, style: TextStyle(color: isActive ? Colors.white : const Color(0xFF666666), fontWeight: isActive ? FontWeight.bold : FontWeight.normal, fontSize: 12)),
+=======
+            Text(
+              label,
+              style: TextStyle(
+                color: isActive ? Colors.white : const Color(0xFF666666),
+                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                fontSize: 12,
+              ),
+            ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
             if (badgeCount != null && badgeCount != '0') ...[
               const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.all(4),
+<<<<<<< HEAD
                 decoration: BoxDecoration(color: isActive ? Colors.white : const Color(0xFF0B3D2E), shape: BoxShape.circle),
                 child: Text(badgeCount, style: TextStyle(color: isActive ? const Color(0xFF0B3D2E) : Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+=======
+                decoration: BoxDecoration(
+                  color: isActive ? Colors.white : const Color(0xFF0B3D2E),
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  badgeCount,
+                  style: TextStyle(
+                    color: isActive ? const Color(0xFF0B3D2E) : Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
               ),
             ],
           ],
@@ -308,13 +455,23 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Widget _buildTicketCard(TicketModel ticket) {
     bool isCancelled = ticket.status == 'Dibatalkan';
+<<<<<<< HEAD
+=======
+
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
     return Container(
       margin: const EdgeInsets.only(bottom: 16.0),
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: isCancelled ? const Color(0xFFF5F5F5) : Colors.white,
         borderRadius: BorderRadius.circular(16),
+<<<<<<< HEAD
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+=======
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -322,11 +479,43 @@ class _HistoryScreenState extends State<HistoryScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+<<<<<<< HEAD
               Row(children: [const Icon(Icons.location_on_outlined, size: 14, color: Colors.grey), const SizedBox(width: 4), Text(ticket.location, style: const TextStyle(fontSize: 12, color: Colors.grey))]),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(color: isCancelled ? const Color(0xFFFADBD8) : ticket.isCompleted ? const Color(0xFFEBEBEB) : const Color(0xFFE3F0E5), borderRadius: BorderRadius.circular(12)),
                 child: Text(ticket.status, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isCancelled ? const Color(0xFFC0392B) : ticket.isCompleted ? Colors.black54 : const Color(0xFF1E5631))),
+=======
+              Row(
+                children: [
+                  const Icon(Icons.location_on_outlined, size: 14, color: Colors.grey),
+                  const SizedBox(width: 4),
+                  Text(ticket.location, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isCancelled
+                      ? const Color(0xFFFADBD8)
+                      : ticket.isCompleted
+                          ? const Color(0xFFEBEBEB)
+                          : const Color(0xFFE3F0E5),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  ticket.status,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: isCancelled
+                        ? const Color(0xFFC0392B)
+                        : ticket.isCompleted
+                            ? Colors.black54
+                            : const Color(0xFF1E5631),
+                  ),
+                ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
               ),
             ],
           ),
@@ -334,13 +523,37 @@ class _HistoryScreenState extends State<HistoryScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+<<<<<<< HEAD
               Container(height: 60, width: 60, decoration: BoxDecoration(color: isCancelled ? Colors.grey : ticket.iconBgColor, borderRadius: BorderRadius.circular(12)), child: const Center(child: Icon(Icons.theater_comedy, color: Colors.white, size: 30))),
+=======
+              Container(
+                height: 60,
+                width: 60,
+                decoration: BoxDecoration(
+                  color: isCancelled ? Colors.grey : ticket.iconBgColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Center(child: Icon(Icons.theater_comedy, color: Colors.white, size: 30)),
+              ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+<<<<<<< HEAD
                     Text(ticket.title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isCancelled ? Colors.grey : const Color(0xFF0B3D2E), fontFamily: 'Georgia')),
+=======
+                    Text(
+                      ticket.title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: isCancelled ? Colors.grey : const Color(0xFF0B3D2E),
+                        fontFamily: 'Georgia',
+                      ),
+                    ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                     const SizedBox(height: 4),
                     Text(ticket.subtitle, style: const TextStyle(fontSize: 12, color: Color(0xFF666666))),
                     const SizedBox(height: 4),
@@ -354,6 +567,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+<<<<<<< HEAD
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('KODE BOOKING', style: TextStyle(fontSize: 10, color: Colors.grey)), Text(ticket.bookingCode, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0B3D2E)))]),
             ],
           ),
@@ -401,6 +615,89 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ] else ...[
             const Align(alignment: Alignment.centerRight, child: Text('Tiket telah dibatalkan', style: TextStyle(fontSize: 11, color: Colors.grey, fontStyle: FontStyle.italic))),
           ],
+=======
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('KODE BOOKING', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                  Text(ticket.bookingCode, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0B3D2E))),
+                ],
+              ),
+              if (!isCancelled) ...[
+                if (!ticket.isCompleted) 
+                  Row(
+                    children: [
+                      OutlinedButton(
+                        onPressed: () => _batalkanTiket(ticket),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFFC0392B),
+                          side: const BorderSide(color: Color(0xFFC0392B)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                        child: const Text('Batalkan', style: TextStyle(fontSize: 11)),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ETicketScreen(
+                                title: ticket.title,
+                                date: 'OCT 21',
+                                time: '09:00 - 11:00',
+                                ticketNumber: ticket.bookingCode,
+                                imageAsset: 'assets/fragmen_wayang_wong_sabtu.webp',
+                              ),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0B3D2E),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        ),
+                        child: const Text('Lihat E-Tiket', style: TextStyle(fontSize: 11)),
+                      ),
+                    ],
+                  )
+                else
+                  Row(
+                    children: [
+                      OutlinedButton(
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => ReviewScreen(ticketTitle: ticket.title)),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF0B3D2E),
+                          side: const BorderSide(color: Colors.grey),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                        child: const Text('Ulasan', style: TextStyle(fontSize: 11)),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0B3D2E),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                        child: const Text('Pesan Lagi', style: TextStyle(fontSize: 11)),
+                      ),
+                    ],
+                  ),
+              ] else ...[
+                const Text('Tiket telah dibatalkan', style: TextStyle(fontSize: 11, color: Colors.grey, fontStyle: FontStyle.italic)),
+              ],
+            ],
+          ),
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
         ],
       ),
     );

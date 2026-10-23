@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
 import 'dart:math';
+=======
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
 
 class ETicketScreen extends StatelessWidget {
   final String title;
@@ -20,7 +23,11 @@ class ETicketScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+<<<<<<< HEAD
       backgroundColor: const Color(0xFFFDF8F0),
+=======
+      backgroundColor: const Color(0xFFFDF8F0), // Warna background cream
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -57,7 +64,11 @@ class ETicketScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 // ==========================================
+<<<<<<< HEAD
                 // BAGIAN ATAS: GAMBAR DINAMIS
+=======
+                // BAGIAN ATAS: GAMBAR
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                 // ==========================================
                 ClipRRect(
                   borderRadius: const BorderRadius.only(
@@ -80,15 +91,27 @@ class ETicketScreen extends StatelessWidget {
                 ),
 
                 // ==========================================
+<<<<<<< HEAD
                 // BAGIAN BAWAH: DETAIL TIKET
                 // ==========================================
                 Stack(
                   children: [
+=======
+                // BAGIAN BAWAH: DETAIL TIKET & LUBANG TIKET
+                // ==========================================
+                Stack(
+                  children: [
+                    // Background Hijau Gelap
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.fromLTRB(24, 30, 24, 30),
                       decoration: const BoxDecoration(
+<<<<<<< HEAD
                         color: Color(0xFF153D1F),
+=======
+                        color: Color(0xFF153D1F), // Hijau gelap sesuai gambar
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                         borderRadius: BorderRadius.only(
                           bottomLeft: Radius.circular(24),
                           bottomRight: Radius.circular(24),
@@ -96,6 +119,7 @@ class ETicketScreen extends StatelessWidget {
                       ),
                       child: Column(
                         children: [
+<<<<<<< HEAD
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -105,6 +129,27 @@ class ETicketScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 24),
                           
+=======
+                          // Info Tanggal & Waktu
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildInfo(
+                                label: 'Tanggal',
+                                value: date,
+                                isGold: true,
+                              ),
+                              _buildInfo(
+                                label: 'Waktu',
+                                value: time,
+                                isGold: true,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          // Nomor Tiket
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                           Text(
                             ticketNumber,
                             style: const TextStyle(
@@ -114,6 +159,7 @@ class ETicketScreen extends StatelessWidget {
                               letterSpacing: 2.0,
                             ),
                           ),
+<<<<<<< HEAD
                           
                           const SizedBox(height: 16),
                           
@@ -139,15 +185,35 @@ class ETicketScreen extends StatelessWidget {
                             'Tunjukkan barcode ini ke petugas di pintu masuk',
                             style: TextStyle(color: Colors.white70, fontSize: 10, fontStyle: FontStyle.italic),
                           ),
+=======
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                         ],
                       ),
                     ),
 
+<<<<<<< HEAD
                     // Lubang Tiket
                     Positioned(top: 0, left: -15, child: _buildTicketHole()),
                     Positioned(top: 0, right: -15, child: _buildTicketHole()),
 
                     // Garis Putus-putus
+=======
+                    // Lubang Tiket Kiri
+                    Positioned(
+                      top: 0,
+                      left: -15,
+                      child: _buildTicketHole(),
+                    ),
+
+                    // Lubang Tiket Kanan
+                    Positioned(
+                      top: 0,
+                      right: -15,
+                      child: _buildTicketHole(),
+                    ),
+
+                    // Garis Putus-putus (Dashed Line)
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                     Positioned(
                       top: 0,
                       left: 20,
@@ -178,6 +244,10 @@ class ETicketScreen extends StatelessWidget {
     );
   }
 
+<<<<<<< HEAD
+=======
+  // Widget untuk teks info (Tanggal / Waktu)
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
   Widget _buildInfo({required String label, required String value, bool isGold = false}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -203,16 +273,26 @@ class ETicketScreen extends StatelessWidget {
     );
   }
 
+<<<<<<< HEAD
+=======
+  // Widget untuk membuat efek lubang tiket
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
   Widget _buildTicketHole() {
     return Container(
       width: 30,
       height: 30,
+<<<<<<< HEAD
       decoration: const BoxDecoration(
         color: Color(0xFFFDF8F0),
+=======
+      decoration: BoxDecoration(
+        color: const Color(0xFFFDF8F0), // Samakan dengan warna background Scaffold
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
         shape: BoxShape.circle,
       ),
     );
   }
+<<<<<<< HEAD
 }
 
 // ==========================================
@@ -250,4 +330,6 @@ class _ManualBarcodePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+=======
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:ui' show PointerDeviceKind;
+<<<<<<< HEAD
 
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -12,6 +13,17 @@ import '../services/supabase_service.dart'; // TAMBAHKAN IMPORT INI
 import 'package:url_launcher/url_launcher.dart';
 
 /* ---------------- RESPONSIVE HELPER ---------------- */
+=======
+import 'package:flutter/material.dart';
+import 'package:carousel_slider/carousel_slider.dart';
+import 'package:intl/intl.dart';
+import 'minigame_screen.dart';
+import 'detail_tiket.dart';
+import '../services/db_helper.dart';
+
+import 'package:url_launcher/url_launcher.dart';
+
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
 enum _ScreenSize { compact, medium, expanded }
 
 class _Layout {
@@ -49,6 +61,12 @@ class _Layout {
   };
 }
 
+<<<<<<< HEAD
+=======
+// ==========================================
+// UBAH JADI STATEFUL WIDGET
+// ==========================================
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -65,6 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadNamaUser();
   }
 
+<<<<<<< HEAD
   // ==========================================
   // PERBAIKAN: AMBIL NAMA DARI SUPABASE DULU
   // ==========================================
@@ -86,10 +105,23 @@ class _HomeScreenState extends State<HomeScreen> {
       } catch (e) {
         // Jika error (offline), fallback ke lokal
         _loadNamaFromLocal(email);
+=======
+  Future<void> _loadNamaUser() async {
+    final email = await DBHelper().getSesi();
+    if (email != null) {
+      final user = await DBHelper().getUserByEmail(email);
+      if (user != null && mounted) {
+        setState(() {
+          // Ambil kata pertama saja untuk sapaan
+          String fullName = user['nama_lengkap'].toString();
+          namaUser = fullName.split(' ').first;
+        });
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
       }
     }
   }
 
+<<<<<<< HEAD
   Future<void> _loadNamaFromLocal(String email) async {
     final user = await DBHelper().getUserByEmail(email);
     if (user != null && mounted) {
@@ -100,6 +132,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+=======
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
   @override
   Widget build(BuildContext context) {
     return MediaQuery.withClampedTextScaling(
@@ -152,6 +186,10 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         Padding(
           padding: EdgeInsets.fromLTRB(g, 14, g, 0),
+<<<<<<< HEAD
+=======
+          // KIRIM NAMA KE HELLO CARD
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
           child: _HelloCard(nama: namaUser),
         ),
         Padding(
@@ -186,6 +224,10 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+<<<<<<< HEAD
+=======
+                // KIRIM NAMA KE HELLO CARD
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
                 Expanded(child: _HelloCard(nama: namaUser)),
                 const SizedBox(width: 16),
                 const Expanded(child: _MiniGamesCard()),
@@ -499,7 +541,11 @@ class _WorldClockStripState extends State<_WorldClockStrip> {
 
 /* ---------------- HELLO CARD ---------------- */
 class _HelloCard extends StatelessWidget {
+<<<<<<< HEAD
   final String nama;
+=======
+  final String nama; // TAMBAHAN PARAMETER NAMA
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
   const _HelloCard({required this.nama});
 
   @override
@@ -561,6 +607,10 @@ class _HelloCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 2),
+<<<<<<< HEAD
+=======
+              // TAMPILKAN NAMA DINAMIS DI SINI
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
               Text(
                 '$nama 👋',
                 style: const TextStyle(
@@ -1061,4 +1111,8 @@ class _GridPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8

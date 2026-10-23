@@ -1,10 +1,14 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+<<<<<<< HEAD
 import 'hash_helper.dart'; // IMPORT HASH HELPER
+=======
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
 
 class SupabaseService {
   final SupabaseClient _client = Supabase.instance.client;
 
+<<<<<<< HEAD
   // ==========================================
   // FUNGSI AUTH (DENGAN HASH)
   // ==========================================
@@ -26,11 +30,14 @@ class SupabaseService {
   }
 
   // 2. Fungsi untuk mendaftarkan user baru
+=======
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
   Future<void> createUser({
     required String email,
     required String nama,
     required String noWa,
     required String kewarganegaraan,
+<<<<<<< HEAD
     required String password,
   }) async {
     try {
@@ -43,12 +50,22 @@ class SupabaseService {
         'no_whatsapp': noWa,
         'kewarganegaraan': kewarganegaraan,
         'password': hashedPassword, // SIMPAN YANG SUDAH DI-HASH
+=======
+  }) async {
+    try {
+      await _client.from('users').insert({
+        'email': email,
+        'nama_lengkap': nama,
+        'no_whatsapp': noWa,
+        'kewarganegaraan': kewarganegaraan,
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
       });
     } catch (e) {
       throw Exception('Gagal menyimpan user: $e');
     }
   }
 
+<<<<<<< HEAD
   // 3. Fungsi untuk cek login (Online)
   Future<bool> cekLoginOnline(String email, String password) async {
     try {
@@ -86,6 +103,8 @@ class SupabaseService {
   // ==========================================
   // FUNGSI PROFIL
   // ==========================================
+=======
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
   Future<Map<String, dynamic>?> getUserProfile(String email) async {
     try {
       final response = await _client
@@ -119,21 +138,30 @@ class SupabaseService {
     required String newPassword,
   }) async {
     try {
+<<<<<<< HEAD
       // HASH PASSWORD BARU SEBELUM DISIMPAN
       String hashedPassword = HashHelper.hashPassword(newPassword);
       
       await _client
           .from('users')
           .update({'password': hashedPassword})
+=======
+      await _client
+          .from('users')
+          .update({'password': newPassword})
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
           .eq('email', email);
     } catch (e) {
       throw Exception('Gagal update password online: $e');
     }
   }
 
+<<<<<<< HEAD
   // ==========================================
   // FUNGSI PAGELARAN, TIKET, ULASAN, AI
   // ==========================================
+=======
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
   Future<List<Map<String, dynamic>>> getPagelaran() async {
     try {
       final response = await _client.from('pagelaran').select();
@@ -149,17 +177,27 @@ class SupabaseService {
     required String kodeBooking,
     required int jumlahTiket,
     required int totalHarga,
+<<<<<<< HEAD
     required String tanggalKunjungan, 
+=======
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
   }) async {
     try {
       await _client.from('tiket').insert({
         'user_email': userEmail,
+<<<<<<< HEAD
         'judul_pagelaran': judulPagelaran, 
+=======
+        'judul_pagelaran': judulPagelaran,
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
         'kode_booking': kodeBooking,
         'jumlah_tiket': jumlahTiket,
         'total_harga': totalHarga,
         'status': 'Aktif',
+<<<<<<< HEAD
         'tanggal_kunjungan': tanggalKunjungan, 
+=======
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
       });
     } catch (e) {
       throw Exception('Gagal menyimpan tiket: $e');
@@ -226,6 +264,7 @@ class SupabaseService {
   Future<String> generateRingkasanAI(String judulPagelaran) async {
     try {
       final ulasanData = await getUlasan(judulPagelaran);
+<<<<<<< HEAD
       if (ulasanData.isEmpty) return "Belum ada ulasan untuk pagelaran ini.";
 
       String semuaUlasan = ulasanData.map((u) => "- ${u['teks_ulasan']}").join("\n");
@@ -236,6 +275,24 @@ class SupabaseService {
       );
 
       final prompt = 'Berikan ringkasan singkat (maksimal 3 kalimat) dalam bahasa Indonesia yang ramah dan menarik dari ulasan penonton pagelaran "$judulPagelaran" berikut ini:\n\n$semuaUlasan';
+=======
+
+      if (ulasanData.isEmpty) {
+        return "Belum ada ulasan untuk pagelaran ini.";
+      }
+
+      String semuaUlasan = ulasanData
+          .map((u) => "- ${u['teks_ulasan']}")
+          .join("\n");
+
+      final model = GenerativeModel(
+        model: 'gemini-1.5-flash',
+        apiKey: 'AQ.Ab8RN6JcgFFem00dYpG88j8RzNnve-UMHzGNzznLYGK7SCizig',
+      );
+
+      final prompt =
+          'Berikan ringkasan singkat (maksimal 3 kalimat) dalam bahasa Indonesia yang ramah dan menarik dari ulasan penonton pagelaran "$judulPagelaran" berikut ini:\n\n$semuaUlasan';
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
 
       final response = await model.generateContent([Content.text(prompt)]);
 
@@ -244,4 +301,8 @@ class SupabaseService {
       return "Terjadi kesalahan saat menghubungi AI: $e";
     }
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 22b384a5e38f34c0e0fbb8817f58daf742fe5fe8
